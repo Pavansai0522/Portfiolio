@@ -8,27 +8,71 @@
 
     <!-- Job Listings Card -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Available Positions</h2>
-          <p class="text-gray-600 dark:text-gray-300 mt-1">Browse through the latest job openings</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Available Positions</h2>
+          <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">Browse through the latest job openings</p>
         </div>
-        <button 
-          (click)="refreshJobs()"
-          [disabled]="isLoadingJobs()"
-          class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          type="button"
-        >
-          @if (isLoadingJobs()) {
-            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-          } @else {
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button 
+            (click)="openFilterModal()"
+            class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition font-semibold flex items-center space-x-2 relative"
+            type="button"
+          >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
             </svg>
-          }
-          <span>{{ isLoadingJobs() ? 'Loading...' : 'Refresh' }}</span>
-        </button>
+            <span>Filter</span>
+            @if (getActiveFiltersCount() > 0) {
+              <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {{ getActiveFiltersCount() }}
+              </span>
+            }
+          </button>
+          <button 
+            (click)="refreshJobs()"
+            [disabled]="isLoadingJobs()"
+            class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+          >
+            @if (isLoadingJobs()) {
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            } @else {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+            }
+            <span>{{ isLoadingJobs() ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
       </div>
+      
+      @if (getActiveFiltersCount() > 0) {
+        <div class="mb-4 flex items-center gap-2 flex-wrap">
+          <span class="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
+          @for (category of getSelectedCategoriesArray(); track category) {
+            <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-semibold flex items-center space-x-2">
+              <span>{{ category }}</span>
+              <button 
+                (click)="toggleCategory(category)"
+                class="hover:text-indigo-900 dark:hover:text-indigo-100"
+                type="button"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </span>
+          }
+          <button 
+            (click)="clearFilters()"
+            class="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold"
+            type="button"
+          >
+            Clear all
+          </button>
+        </div>
+      }
 
       @if (isLoadingJobs()) {
         <div class="flex justify-center items-center py-12">
@@ -108,11 +152,95 @@
 
         @if (jobs().length === 0) {
           <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p class="text-lg">No job opportunities available at the moment.</p>
-            <p class="text-sm mt-2">Check back later for new opportunities</p>
+            @if (getActiveFiltersCount() > 0) {
+              <p class="text-lg">No jobs found matching your filters.</p>
+              <p class="text-sm mt-2">Try adjusting your filter criteria</p>
+              <button 
+                (click)="clearFilters()"
+                class="mt-4 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                type="button"
+              >
+                Clear Filters
+              </button>
+            } @else {
+              <p class="text-lg">No job opportunities available at the moment.</p>
+              <p class="text-sm mt-2">Check back later for new opportunities</p>
+            }
           </div>
         }
       }
     </div>
   </div>
+
+  <!-- Filter Modal -->
+  @if (isFilterModalOpen()) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" (click)="closeFilterModal()">
+      <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" (click)="closeFilterModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full" (click)="$event.stopPropagation()">
+          <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Filter by Sector</h3>
+              <button 
+                (click)="closeFilterModal()"
+                class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition"
+                type="button"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+              @for (category of availableCategories(); track category) {
+                <label class="flex items-center p-3 rounded-lg border-2 cursor-pointer transition-colors"
+                       [class.border-indigo-500]="isCategorySelected(category)"
+                       [class.bg-indigo-50]="isCategorySelected(category)"
+                       [class.dark:bg-indigo-900]="isCategorySelected(category)"
+                       [class.border-gray-200]="!isCategorySelected(category)"
+                       [class.dark:border-gray-700]="!isCategorySelected(category)"
+                       [class.hover:border-indigo-300]="!isCategorySelected(category)">
+                  <input 
+                    type="checkbox"
+                    [checked]="isCategorySelected(category)"
+                    (change)="toggleCategory(category)"
+                    class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  />
+                  <span class="ml-3 text-gray-900 dark:text-white font-medium">{{ category }}</span>
+                  <span class="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                    ({{ allJobs().filter(j => j.category === category).length }})
+                  </span>
+                </label>
+              }
+              
+              @if (availableCategories().length === 0) {
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No categories available</p>
+              }
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <button 
+                (click)="clearFilters()"
+                class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-semibold"
+                type="button"
+              >
+                Clear All
+              </button>
+              <button 
+                (click)="applyFilters()"
+                class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition font-semibold"
+                type="button"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>
