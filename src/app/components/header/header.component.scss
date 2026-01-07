@@ -1,2 +1,9 @@
 /* Component-specific styles */
 
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+}
