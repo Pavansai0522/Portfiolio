@@ -882,10 +882,20 @@ app.get('/api/tech-news', async (req, res) => {
 app.get('/api/jobs', async (req, res) => {
   try {
     // Fetch jobs from Remotive API with cache-busting
-    const searchQuery = req.query.search || 'developer';
+    const searchQuery = req.query.search;
     // Add timestamp to prevent caching
     const timestamp = Date.now();
-    const remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchQuery)}&_t=${timestamp}`;
+    
+    // If search query provided, use it; otherwise fetch all jobs
+    let remotiveUrl;
+    if (searchQuery) {
+      remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchQuery)}&_t=${timestamp}`;
+    } else {
+      // Fetch all remote jobs without search filter
+      remotiveUrl = `https://remotive.com/api/remote-jobs?_t=${timestamp}`;
+    }
+    
+    console.log('Fetching jobs from:', remotiveUrl);
     
     const response = await fetch(remotiveUrl, {
       signal: AbortSignal.timeout(10000), // 10 second timeout
@@ -903,14 +913,14 @@ app.get('/api/jobs', async (req, res) => {
     
     // Get all jobs and shuffle them to show different ones on each refresh
     const allJobs = data.jobs || [];
-    console.log(`Remotive API returned ${allJobs.length} jobs`);
+    console.log(`Remotive API returned ${allJobs.length} total jobs`);
     
     if (allJobs.length === 0) {
       return res.json({
         success: true,
         jobs: [],
         total: 0,
-        message: 'No jobs found for the search query'
+        message: 'No jobs found'
       });
     }
     
@@ -918,6 +928,7 @@ app.get('/api/jobs', async (req, res) => {
     
     // Format jobs from Remotive API response (take up to 50 jobs for better variety)
     const maxJobs = Math.min(50, shuffledJobs.length);
+    console.log(`Returning ${maxJobs} jobs after shuffling`);
     const jobs = shuffledJobs.slice(0, maxJobs).map((job, index) => ({
       id: job.id || index + 1,
       title: job.title || 'Untitled Position',
