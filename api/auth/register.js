@@ -1,17 +1,31 @@
 // Vercel Serverless Function for POST /api/auth/register
-const app = require('../../server');
-const connectDB = require('../../config/database');
-const mongoose = require('mongoose');
+let app;
+let connectDB;
+let mongoose;
+
+// Lazy load to catch initialization errors
+try {
+  app = require('../../server');
+  connectDB = require('../../config/database');
+  mongoose = require('mongoose');
+} catch (error) {
+  console.error('Failed to load dependencies:', error);
+  throw error;
+}
 
 let connectionPromise = null;
 
 module.exports = async (req, res) => {
   try {
-    console.log('Register endpoint called:', req.method, req.url);
+    console.log('=== Register endpoint called ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Path:', req.path);
     
     // Ensure database is connected
     if (mongoose.connection.readyState !== 1) {
       if (!connectionPromise) {
+        console.log('Starting database connection...');
         connectionPromise = connectDB().catch(err => {
           console.error('Database connection failed:', err);
           connectionPromise = null;
@@ -29,68 +43,33 @@ module.exports = async (req, res) => {
         console.log('Database connected successfully');
       } catch (err) {
         console.error('Database connection error:', err.message);
-        return res.status(500).json({ error: 'Database connection failed', details: err.message });
+        if (!res.headersSent) {
+          return res.status(500).json({ error: 'Database connection failed', details: err.message });
+        }
+        return;
       }
     }
     
     // Set the path to match Express route
     req.path = '/api/auth/register';
-    req.url = '/api/auth/register' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
-    req.originalUrl = '/api/auth/register' + (req.originalUrl.includes('?') ? req.originalUrl.substring(req.originalUrl.indexOf('?')) : '');
+    const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+    req.url = '/api/auth/register' + queryString;
+    req.originalUrl = '/api/auth/register' + queryString;
     
     console.log('Routing to Express with path:', req.path);
     
-    // Handle the request with Express - wrap in promise to catch errors
-    return new Promise((resolve, reject) => {
-      // Set timeout to prevent hanging
-      const timeout = setTimeout(() => {
-        if (!res.headersSent) {
-          console.error('Request timeout - no response sent');
-          res.status(504).json({ error: 'Request timeout' });
-          resolve();
-        }
-      }, 25000);
-      
-      // Override res.end to know when response is sent
-      const originalEnd = res.end;
-      res.end = function(...args) {
-        clearTimeout(timeout);
-        originalEnd.apply(this, args);
-        resolve();
-      };
-      
-      // Handle errors
-      res.on('error', (err) => {
-        clearTimeout(timeout);
-        console.error('Response error:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Internal server error', details: err.message });
-        }
-        resolve();
-      });
-      
-      // Call Express app
-      try {
-        app(req, res);
-        
-        // If response was sent synchronously, resolve immediately
-        if (res.headersSent) {
-          clearTimeout(timeout);
-          resolve();
-        }
-      } catch (err) {
-        clearTimeout(timeout);
-        console.error('Error calling Express app:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Internal server error', details: err.message });
-        }
-        resolve();
-      }
-    });
+    // Handle the request with Express
+    app(req, res);
+    
   } catch (error) {
     console.error('Unhandled error in register handler:', error);
+    console.error('Error stack:', error.stack);
     if (!res.headersSent) {
-      return res.status(500).json({ error: 'Internal server error', details: error.message });
+      return res.status(500).json({ 
+        error: 'Internal server error', 
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 };
