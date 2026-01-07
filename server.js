@@ -939,10 +939,38 @@ app.get('/api/health', async (req, res) => {
     const dbStatus = mongoose.connection.readyState;
     const dbStatusText = ['disconnected', 'connected', 'connecting', 'disconnecting'][dbStatus] || 'unknown';
     
+    // Try to connect if not connected
+    let connectionInfo = {
+      status: dbStatusText,
+      hasMongoUri: !!process.env.MONGODB_URI,
+      mongoUriFormat: process.env.MONGODB_URI ? 'present' : 'missing'
+    };
+    
+    // If disconnected and MONGODB_URI is set, try to connect
+    if (dbStatus === 0 && process.env.MONGODB_URI) {
+      try {
+        const connectDB = require('./config/database');
+        await Promise.race([
+          connectDB(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout after 5s')), 5000)
+          )
+        ]);
+        connectionInfo.status = 'connected';
+        connectionInfo.message = 'Connection established';
+      } catch (err) {
+        connectionInfo.status = 'disconnected';
+        connectionInfo.error = err.message;
+        connectionInfo.errorType = err.name;
+      }
+    } else if (!process.env.MONGODB_URI) {
+      connectionInfo.error = 'MONGODB_URI environment variable is not set';
+    }
+    
     res.json({ 
       status: 'ok', 
       message: 'Portfolio API is running',
-      database: dbStatusText
+      database: connectionInfo
     });
   } catch (error) {
     res.status(500).json({ 

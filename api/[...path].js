@@ -34,22 +34,29 @@ module.exports = async (req, res) => {
     await Promise.race([
       connectionPromise,
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+        setTimeout(() => reject(new Error('Connection timeout after 10s')), 10000)
       )
     ]);
     console.log('Database connection established');
   } catch (err) {
     // Connection failed or timed out
     console.error('Database connection error in handler:', err.message);
+    console.error('Error stack:', err.stack);
+    console.error('MONGODB_URI present:', !!process.env.MONGODB_URI);
+    
     // Still continue - some routes might work without DB, or return error
     if (req.path === '/api/health') {
-      // For health check, return current status
+      // For health check, return detailed status
       return res.json({
         status: 'ok',
         message: 'Portfolio API is running',
-        database: mongoose.connection.readyState === 1 ? 'connected' : 
-                 mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected',
-        error: err.message
+        database: {
+          status: mongoose.connection.readyState === 1 ? 'connected' : 
+                  mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected',
+          error: err.message,
+          errorType: err.name,
+          hasMongoUri: !!process.env.MONGODB_URI
+        }
       });
     }
   }
