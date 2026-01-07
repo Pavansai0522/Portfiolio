@@ -12,8 +12,12 @@
               >
             }
             <div>
-              <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">{{ data.name || 'Your Name' }}</h1>
-              <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">{{ data.title || 'Your Title' }}</p>
+              @if (data.name) {
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">{{ data.name }}</h1>
+              }
+              @if (data.title) {
+                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">{{ data.title }}</p>
+              }
             </div>
           </div>
         } @else {
