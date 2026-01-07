@@ -23,6 +23,9 @@ module.exports = async (req, res) => {
   console.log('Query.path:', req.query?.path);
   console.log('Query.path type:', Array.isArray(req.query?.path) ? 'array' : typeof req.query?.path);
   
+  // IMPORTANT: This catch-all should handle ALL /api/* routes that don't have specific handlers
+  // Including /api/portfolio/experience, /api/portfolio/education, /api/portfolio/achievements
+  
   // In Vercel, when using [...path], the path segments are in req.query.path
   // For /api/portfolio/experience, req.query.path will be ['portfolio', 'experience']
   let fullPath = null;
