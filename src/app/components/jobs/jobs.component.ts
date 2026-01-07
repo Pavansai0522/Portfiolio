@@ -98,14 +98,25 @@ export class JobsComponent implements OnInit {
   }
   
   protected toggleCategory(category: string): void {
-    // Update temporary selection (not the actual filter)
-    const tempSelected = new Set(this.tempSelectedCategories());
-    if (tempSelected.has(category)) {
-      tempSelected.delete(category);
+    if (this.isFilterModalOpen()) {
+      // Update temporary selection when modal is open
+      const tempSelected = new Set(this.tempSelectedCategories());
+      if (tempSelected.has(category)) {
+        tempSelected.delete(category);
+      } else {
+        tempSelected.add(category);
+      }
+      this.tempSelectedCategories.set(tempSelected);
     } else {
-      tempSelected.add(category);
+      // Update actual filter when modal is closed (e.g., removing active filter chips)
+      const selected = new Set(this.selectedCategories());
+      if (selected.has(category)) {
+        selected.delete(category);
+      } else {
+        selected.add(category);
+      }
+      this.selectedCategories.set(selected);
     }
-    this.tempSelectedCategories.set(tempSelected);
   }
   
   protected isCategorySelected(category: string): boolean {
