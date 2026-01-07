@@ -4,22 +4,39 @@
 const app = require('../server');
 
 // For Vercel catch-all routes [...path], requests to /api/* are routed here
-// The original URL path is preserved in req.url
-module.exports = (req, res) => {
-  // Log for debugging (will appear in Vercel function logs)
-  console.log('API Request:', req.method, req.url, req.path);
-  
-  // Ensure the path starts with /api for Express routes
-  const originalUrl = req.url;
-  const originalPath = req.path;
-  
-  if (!req.path.startsWith('/api')) {
-    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
-    req.path = '/api' + (req.path.startsWith('/') ? req.path : '/' + req.path);
-    console.log('Adjusted path:', req.path);
+// The path segments are available in req.query.path or we reconstruct from req.url
+module.exports = async (req, res) => {
+  try {
+    // Log for debugging
+    console.log('API Request received:', {
+      method: req.method,
+      url: req.url,
+      path: req.path,
+      originalUrl: req.originalUrl,
+      query: req.query
+    });
+    
+    // Vercel preserves the full URL in req.url, so Express should handle it correctly
+    // But let's ensure the path is correct for Express routing
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const pathname = url.pathname;
+    
+    // Ensure path starts with /api (Express routes are defined with /api prefix)
+    if (!pathname.startsWith('/api')) {
+      req.url = '/api' + pathname;
+      req.path = '/api' + pathname;
+    } else {
+      req.url = pathname;
+      req.path = pathname;
+    }
+    
+    console.log('Processing with Express:', req.method, req.path);
+    
+    // Handle the request with Express
+    app(req, res);
+  } catch (error) {
+    console.error('Error in API handler:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
   }
-  
-  // Handle the request with Express
-  return app(req, res);
 };
 
