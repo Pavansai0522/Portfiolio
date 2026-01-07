@@ -109,11 +109,16 @@ export class JobsComponent implements OnInit {
   }
   
   protected isCategorySelected(category: string): boolean {
-    // Check temp selection when modal is open, actual selection otherwise
+    // Always check temp selection when modal is open
     if (this.isFilterModalOpen()) {
       return this.tempSelectedCategories().has(category);
     }
     return this.selectedCategories().has(category);
+  }
+  
+  protected isCategorySelectedInModal(category: string): boolean {
+    // Explicitly check temp selection for modal
+    return this.tempSelectedCategories().has(category);
   }
   
   protected clearFilters(): void {

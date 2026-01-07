@@ -198,15 +198,15 @@
             <div class="space-y-3 max-h-96 overflow-y-auto">
               @for (category of availableCategories(); track category) {
                 <label class="flex items-center p-3 rounded-lg border-2 cursor-pointer transition-colors"
-                       [class.border-indigo-500]="isCategorySelected(category)"
-                       [class.bg-indigo-50]="isCategorySelected(category)"
-                       [class.dark:bg-indigo-900]="isCategorySelected(category)"
-                       [class.border-gray-200]="!isCategorySelected(category)"
-                       [class.dark:border-gray-700]="!isCategorySelected(category)"
-                       [class.hover:border-indigo-300]="!isCategorySelected(category)">
+                       [class.border-indigo-500]="isCategorySelectedInModal(category)"
+                       [class.bg-indigo-50]="isCategorySelectedInModal(category)"
+                       [class.dark:bg-indigo-900]="isCategorySelectedInModal(category)"
+                       [class.border-gray-200]="!isCategorySelectedInModal(category)"
+                       [class.dark:border-gray-700]="!isCategorySelectedInModal(category)"
+                       [class.hover:border-indigo-300]="!isCategorySelectedInModal(category)">
                   <input 
                     type="checkbox"
-                    [checked]="isCategorySelected(category)"
+                    [checked]="isCategorySelectedInModal(category)"
                     (change)="toggleCategory(category)"
                     class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
                   />
