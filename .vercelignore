@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.local
+*.log
+data/
+server.js
+models/
+config/
+utils/
+*.md
+!README.md
+

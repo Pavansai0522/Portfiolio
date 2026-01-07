@@ -1,0 +1,285 @@
+<section id="projects" class="mb-16">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Projects</h2>
+      <button 
+        (click)="startAddingProject()" 
+        class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+        type="button"
+      >
+        + Add Project
+      </button>
+    </div>
+
+    <!-- Add Project Form -->
+    @if (isAddingProject()) {
+      <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-dashed border-indigo-300 dark:border-indigo-600">
+        <h3 class="text-xl font-semibold mb-4 dark:text-white">New Project</h3>
+        <div class="space-y-4">
+          <div>
+            <label for="new-project-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Title</label>
+            <input 
+              id="new-project-title"
+              type="text" 
+              [ngModel]="newProject().title" 
+              (ngModelChange)="updateNewProjectTitle($event)"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              placeholder="Project Name"
+            >
+          </div>
+          <div>
+            <label for="new-project-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+            <textarea 
+              id="new-project-description"
+              [ngModel]="newProject().description" 
+              (ngModelChange)="updateNewProjectDescription($event)"
+              rows="3"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              placeholder="Project description..."
+            ></textarea>
+          </div>
+          <div>
+            <label for="new-project-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Image</label>
+            <div class="relative">
+              @if (newProject().image) {
+                <img 
+                  [src]="newProject().image" 
+                  alt="Project" 
+                  class="w-full h-48 object-cover rounded-lg mb-2"
+                >
+              }
+              <input 
+                id="new-project-image"
+                type="file" 
+                accept="image/*" 
+                (change)="onProjectImageUpload($event, true)"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                aria-label="Upload project image"
+              >
+            </div>
+          </div>
+          <div>
+            <label for="new-project-link" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Link (optional)</label>
+            <input 
+              id="new-project-link"
+              type="url" 
+              [ngModel]="newProject().link" 
+              (ngModelChange)="updateNewProjectLink($event)"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              placeholder="https://..."
+            >
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Technologies</label>
+              <button 
+                (click)="addTechnology(true)" 
+                class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded hover:from-purple-600 hover:to-pink-600 text-sm font-semibold"
+                type="button"
+              >
+                + Add
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              @for (tech of newProject().technologies || []; track $index) {
+                <span 
+                  class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center gap-2"
+                >
+                  {{ tech }}
+                  <button 
+                    (click)="removeTechnology($index, true)"
+                    class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-bold"
+                    type="button"
+                    [attr.aria-label]="'Remove technology ' + tech"
+                  >
+                    ×
+                  </button>
+                </span>
+              }
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              (click)="saveProject()" 
+              class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+              type="button"
+            >
+              Save Project
+            </button>
+            <button 
+              (click)="cancelAddingProject()" 
+              class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+              type="button"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Projects List -->
+    @if (portfolioData(); as data) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (project of data.projects; track project.id) {
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition">
+            <div class="relative">
+              <img 
+                [src]="project.image || 'https://via.placeholder.com/400x250'" 
+                [alt]="project.title"
+                class="w-full h-48 object-cover"
+              >
+              <div class="absolute top-2 right-2 flex gap-2">
+                <button 
+                  (click)="startEditingProject(project)"
+                  class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded text-sm hover:from-purple-600 hover:to-pink-600 font-semibold"
+                  type="button"
+                >
+                  Edit
+                </button>
+                <button 
+                  (click)="deleteProject(project.id)"
+                  class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">{{ project.title }}</h3>
+              <p class="text-gray-600 dark:text-gray-300 mb-4">{{ project.description }}</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                @for (tech of project.technologies; track tech) {
+                  <span class="px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300 rounded text-xs">
+                    {{ tech }}
+                  </span>
+                }
+              </div>
+              @if (project.link) {
+                <a 
+                  [href]="project.link" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
+                >
+                  View Project →
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Edit Project Form -->
+        @if (isEditingProject() !== null && projectForm().id === isEditingProject()) {
+          <div class="md:col-span-2 lg:col-span-3 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-blue-300 dark:border-blue-600">
+            <h3 class="text-xl font-semibold mb-4 dark:text-white">Edit Project</h3>
+            <div class="space-y-4">
+              <div>
+                <label for="edit-project-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Title</label>
+                <input 
+                  id="edit-project-title"
+                  type="text" 
+                  [ngModel]="projectForm().title" 
+                  (ngModelChange)="updateProjectFormTitle($event)"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+              </div>
+              <div>
+                <label for="edit-project-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <textarea 
+                  id="edit-project-description"
+                  [ngModel]="projectForm().description" 
+                  (ngModelChange)="updateProjectFormDescription($event)"
+                  rows="3"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                ></textarea>
+              </div>
+              <div>
+                <label for="edit-project-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Image</label>
+                <div class="relative">
+                  @if (projectForm().image) {
+                    <img 
+                      [src]="projectForm().image" 
+                      alt="Project" 
+                      class="w-full h-48 object-cover rounded-lg mb-2"
+                    >
+                  }
+                  <input 
+                    id="edit-project-image"
+                    type="file" 
+                    accept="image/*" 
+                    (change)="onProjectImageUpload($event, false)"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    aria-label="Upload project image"
+                  >
+                </div>
+              </div>
+              <div>
+                <label for="edit-project-link" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Link</label>
+                <input 
+                  id="edit-project-link"
+                  type="url" 
+                  [ngModel]="projectForm().link" 
+                  (ngModelChange)="updateProjectFormLink($event)"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+              </div>
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Technologies</label>
+                  <button 
+                    (click)="addTechnology(false)" 
+                    class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded hover:from-purple-600 hover:to-pink-600 text-sm font-semibold"
+                    type="button"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  @for (tech of projectForm().technologies || []; track $index) {
+                    <span 
+                      class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center gap-2"
+                    >
+                      {{ tech }}
+                      <button 
+                        (click)="removeTechnology($index, false)"
+                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-bold"
+                        type="button"
+                        [attr.aria-label]="'Remove technology ' + tech"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  }
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button 
+                  (click)="saveProject()" 
+                  class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                  type="button"
+                >
+                  Save Changes
+                </button>
+                <button 
+                  (click)="cancelAddingProject()" 
+                  class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                  type="button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (data.projects.length === 0) {
+          <div class="md:col-span-2 lg:col-span-3 text-center py-12 text-gray-500 dark:text-gray-400">
+            <p class="text-lg">No projects added yet. Click "Add Project" to get started!</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>

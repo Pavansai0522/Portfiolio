@@ -1,0 +1,181 @@
+<section id="about" class="mb-16">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 dark:text-white">About Me</h2>
+      <button 
+        (click)="toggleEdit()" 
+        class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+        type="button"
+      >
+        {{ isEditing() ? 'Save' : 'Edit' }}
+      </button>
+    </div>
+
+    @if (portfolioData(); as data) {
+      <div class="space-y-6">
+        <!-- Profile Image Upload -->
+        <div class="flex flex-col items-center mb-6">
+          <div class="relative">
+            <img 
+              [src]="formData().profileImage || 'https://via.placeholder.com/200'" 
+              alt="Profile" 
+              class="w-48 h-48 rounded-full object-cover border-4 border-indigo-500 shadow-lg"
+            >
+            @if (isEditing()) {
+              <input 
+                type="file" 
+                accept="image/*" 
+                (change)="onImageUpload($event)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                aria-label="Upload profile image"
+              >
+            }
+          </div>
+          @if (isEditing()) {
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Click image to upload</p>
+          }
+        </div>
+
+        <!-- Personal Information Form -->
+        @if (isEditing()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
+              <input 
+                id="name"
+                type="text" 
+                [ngModel]="formData().name" 
+                (ngModelChange)="updateName($event)"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="John Doe"
+              >
+            </div>
+            <div>
+              <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title/Position</label>
+              <input 
+                id="title"
+                type="text" 
+                [ngModel]="formData().title" 
+                (ngModelChange)="updateTitle($event)"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Software Developer"
+              >
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+              <input 
+                id="email"
+                type="email" 
+                [ngModel]="formData().email" 
+                (ngModelChange)="updateEmail($event)"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="john@example.com"
+              >
+            </div>
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone</label>
+              <input 
+                id="phone"
+                type="tel" 
+                [ngModel]="formData().phone" 
+                (ngModelChange)="updatePhone($event)"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="+1 234 567 8900"
+              >
+            </div>
+            <div class="md:col-span-2">
+              <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+              <input 
+                id="location"
+                type="text" 
+                [ngModel]="formData().location" 
+                (ngModelChange)="updateLocation($event)"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="City, Country"
+              >
+            </div>
+            <div class="md:col-span-2">
+              <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</label>
+              <textarea 
+                id="bio"
+                [ngModel]="formData().bio" 
+                (ngModelChange)="updateBio($event)"
+                rows="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Tell us about yourself..."
+              ></textarea>
+            </div>
+          </div>
+        }
+
+        <!-- Display Mode -->
+        @if (!isEditing()) {
+          <div class="space-y-4">
+            <div>
+              <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">{{ data.name || 'Your Name' }}</h3>
+              <p class="text-lg text-indigo-600 dark:text-indigo-400 mb-4">{{ data.title || 'Your Title' }}</p>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ data.bio || 'Add your bio here...' }}</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700 dark:text-gray-300">
+              @if (data.email) {
+                <div>
+                  <strong>Email:</strong> {{ data.email }}
+                </div>
+              }
+              @if (data.phone) {
+                <div>
+                  <strong>Phone:</strong> {{ data.phone }}
+                </div>
+              }
+              @if (data.location) {
+                <div class="md:col-span-2">
+                  <strong>Location:</strong> {{ data.location }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Skills Section -->
+        <div class="mt-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Skills</h3>
+            @if (isEditing()) {
+              <button 
+                (click)="addSkill()" 
+                class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded hover:from-purple-600 hover:to-pink-600 transition text-sm font-semibold"
+                type="button"
+              >
+                + Add Skill
+              </button>
+            }
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (skill of formData().skills || []; track $index) {
+              <span 
+                class="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300 rounded-full text-sm font-medium flex items-center gap-2"
+              >
+                {{ skill }}
+                @if (isEditing()) {
+                  <button 
+                    (click)="removeSkill($index)"
+                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 font-bold"
+                    type="button"
+                    [attr.aria-label]="'Remove skill ' + skill"
+                  >
+                    ×
+                  </button>
+                }
+              </span>
+            }
+            @if ((!formData().skills?.length) && !isEditing()) {
+              <span class="text-gray-500 dark:text-gray-400">
+                No skills added yet
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</section>

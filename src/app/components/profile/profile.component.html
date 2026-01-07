@@ -1,0 +1,533 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8 transition-colors">
+  <div class="container mx-auto px-4">
+    <!-- Header Section -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">My Profile</h1>
+      <p class="text-gray-600 dark:text-gray-300">Manage your professional profile and showcase your expertise</p>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 transition-colors">
+      <div class="border-b border-gray-200 dark:border-gray-700">
+        <nav class="flex space-x-1 px-4" aria-label="Tabs">
+          <button
+            (click)="setActiveTab('overview')"
+            [class]="activeTab() === 'overview' 
+              ? 'px-6 py-4 border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 font-semibold' 
+              : 'px-6 py-4 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition'"
+          >
+            Overview
+          </button>
+          <button
+            (click)="setActiveTab('experience')"
+            [class]="activeTab() === 'experience' 
+              ? 'px-6 py-4 border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 font-semibold' 
+              : 'px-6 py-4 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition'"
+          >
+            Experience
+          </button>
+          <button
+            (click)="setActiveTab('education')"
+            [class]="activeTab() === 'education' 
+              ? 'px-6 py-4 border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 font-semibold' 
+              : 'px-6 py-4 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition'"
+          >
+            Education
+          </button>
+          <button
+            (click)="setActiveTab('achievements')"
+            [class]="activeTab() === 'achievements' 
+              ? 'px-6 py-4 border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 font-semibold' 
+              : 'px-6 py-4 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition'"
+          >
+            Achievements
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="space-y-6">
+      <!-- Overview Tab - Extended About Me -->
+      @if (activeTab() === 'overview') {
+        <app-about></app-about>
+      }
+
+      <!-- Experience Tab -->
+      @if (activeTab() === 'experience') {
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Work Experience</h2>
+            <button 
+              (click)="openExperienceForm()"
+              class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+              type="button"
+            >
+              + Add Experience
+            </button>
+          </div>
+
+          <!-- Experience Form -->
+          @if (showExperienceForm()) {
+            <div class="mb-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-purple-300 dark:border-purple-600">
+              <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                {{ editingExperienceId() ? 'Edit Experience' : 'Add New Experience' }}
+              </h3>
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="experienceForm().company"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="Company name"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Position *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="experienceForm().position"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="Job title"
+                    />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="experienceForm().startDate"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="e.g., Jan 2020"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="experienceForm().endDate"
+                      [disabled]="experienceForm().isCurrent ?? false"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                      placeholder="e.g., Dec 2022 or Present"
+                    />
+                  </div>
+                </div>
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    id="isCurrentExp"
+                    [(ngModel)]="experienceForm().isCurrent"
+                    class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <label for="isCurrentExp" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Currently working here</label>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="experienceForm().location"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="City, Country"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea 
+                    [(ngModel)]="experienceForm().description"
+                    rows="4"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="Describe your role and responsibilities..."
+                  ></textarea>
+                </div>
+                <div class="flex gap-3">
+                  <button 
+                    (click)="saveExperience()"
+                    class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    (click)="closeExperienceForm()"
+                    class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Experience List -->
+          @if (portfolioData().experience.length === 0) {
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+              <p class="text-lg">No experience added yet</p>
+              <p class="text-sm mt-2">Click "Add Experience" to get started</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (exp of portfolioData().experience; track exp.id) {
+                <div class="p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <h3 class="text-xl font-semibold text-gray-800 dark:text-white">{{ exp.position }}</h3>
+                      <p class="text-lg text-purple-600 dark:text-purple-400 font-medium">{{ exp.company }}</p>
+                      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {{ exp.startDate }} - {{ exp.isCurrent ? 'Present' : exp.endDate || 'N/A' }}
+                        @if (exp.location) {
+                          <span class="ml-2">• {{ exp.location }}</span>
+                        }
+                      </p>
+                      @if (exp.description) {
+                        <p class="text-gray-700 dark:text-gray-300 mt-3">{{ exp.description }}</p>
+                      }
+                    </div>
+                    <div class="flex gap-2 ml-4">
+                      <button 
+                        (click)="openExperienceForm(exp)"
+                        class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        (click)="deleteExperience(exp.id)"
+                        class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Education Tab -->
+      @if (activeTab() === 'education') {
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Education</h2>
+            <button 
+              (click)="openEducationForm()"
+              class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+              type="button"
+            >
+              + Add Education
+            </button>
+          </div>
+
+          <!-- Education Form -->
+          @if (showEducationForm()) {
+            <div class="mb-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-purple-300 dark:border-purple-600">
+              <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                {{ editingEducationId() ? 'Edit Education' : 'Add New Education' }}
+              </h3>
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Institution *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="educationForm().institution"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="School/University name"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Degree *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="educationForm().degree"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="e.g., Bachelor of Science"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Field of Study</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="educationForm().field"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g., Computer Science"
+                  />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="educationForm().startDate"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="e.g., Sep 2018"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="educationForm().endDate"
+                      [disabled]="educationForm().isCurrent ?? false"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                      placeholder="e.g., May 2022 or Present"
+                    />
+                  </div>
+                </div>
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    id="isCurrentEdu"
+                    [(ngModel)]="educationForm().isCurrent"
+                    class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <label for="isCurrentEdu" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Currently studying</label>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="educationForm().location"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="City, Country"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea 
+                    [(ngModel)]="educationForm().description"
+                    rows="4"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="Additional details about your education..."
+                  ></textarea>
+                </div>
+                <div class="flex gap-3">
+                  <button 
+                    (click)="saveEducation()"
+                    class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    (click)="closeEducationForm()"
+                    class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Education List -->
+          @if (portfolioData().education.length === 0) {
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+              <p class="text-lg">No education added yet</p>
+              <p class="text-sm mt-2">Click "Add Education" to get started</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (edu of portfolioData().education; track edu.id) {
+                <div class="p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <h3 class="text-xl font-semibold text-gray-800 dark:text-white">{{ edu.degree }}</h3>
+                      <p class="text-lg text-purple-600 dark:text-purple-400 font-medium">{{ edu.institution }}</p>
+                      @if (edu.field) {
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Field: {{ edu.field }}</p>
+                      }
+                      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {{ edu.startDate }} - {{ edu.isCurrent ? 'Present' : edu.endDate || 'N/A' }}
+                        @if (edu.location) {
+                          <span class="ml-2">• {{ edu.location }}</span>
+                        }
+                      </p>
+                      @if (edu.description) {
+                        <p class="text-gray-700 dark:text-gray-300 mt-3">{{ edu.description }}</p>
+                      }
+                    </div>
+                    <div class="flex gap-2 ml-4">
+                      <button 
+                        (click)="openEducationForm(edu)"
+                        class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        (click)="deleteEducation(edu.id)"
+                        class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Achievements Tab -->
+      @if (activeTab() === 'achievements') {
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Achievements & Certifications</h2>
+            <button 
+              (click)="openAchievementForm()"
+              class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+              type="button"
+            >
+              + Add Achievement
+            </button>
+          </div>
+
+          <!-- Achievement Form -->
+          @if (showAchievementForm()) {
+            <div class="mb-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-purple-300 dark:border-purple-600">
+              <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                {{ editingAchievementId() ? 'Edit Achievement' : 'Add New Achievement' }}
+              </h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="achievementForm().title"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="Achievement or certification name"
+                  />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Issuer</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="achievementForm().issuer"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="Organization or institution"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                    <select 
+                      [(ngModel)]="achievementForm().type"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="certification">Certification</option>
+                      <option value="award">Award</option>
+                      <option value="achievement">Achievement</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="achievementForm().date"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g., Jan 2023"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL</label>
+                  <input 
+                    type="url" 
+                    [(ngModel)]="achievementForm().url"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="https://example.com/certificate"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea 
+                    [(ngModel)]="achievementForm().description"
+                    rows="4"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    placeholder="Additional details about this achievement..."
+                  ></textarea>
+                </div>
+                <div class="flex gap-3">
+                  <button 
+                    (click)="saveAchievement()"
+                    class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    (click)="closeAchievementForm()"
+                    class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Achievements List -->
+          @if (portfolioData().achievements.length === 0) {
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+              <p class="text-lg">No achievements added yet</p>
+              <p class="text-sm mt-2">Click "Add Achievement" to get started</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (ach of portfolioData().achievements; track ach.id) {
+                <div class="p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white">{{ ach.title }}</h3>
+                        <span class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded">
+                          {{ ach.type }}
+                        </span>
+                      </div>
+                      @if (ach.issuer) {
+                        <p class="text-lg text-purple-600 dark:text-purple-400 font-medium mt-1">{{ ach.issuer }}</p>
+                      }
+                      @if (ach.date) {
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Date: {{ ach.date }}</p>
+                      }
+                      @if (ach.description) {
+                        <p class="text-gray-700 dark:text-gray-300 mt-3">{{ ach.description }}</p>
+                      }
+                      @if (ach.url) {
+                        <a 
+                          [href]="ach.url" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          class="text-purple-600 dark:text-purple-400 hover:underline text-sm mt-2 inline-block"
+                        >
+                          View Certificate →
+                        </a>
+                      }
+                    </div>
+                    <div class="flex gap-2 ml-4">
+                      <button 
+                        (click)="openAchievementForm(ach)"
+                        class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        (click)="deleteAchievement(ach.id)"
+                        class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

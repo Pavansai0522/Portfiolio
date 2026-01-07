@@ -1,0 +1,135 @@
+{
+  "info": {
+    "name": "Portfolio API",
+    "description": "API collection for Portfolio application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/api/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "Get Portfolio Data",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/api/portfolio",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "portfolio"]
+        }
+      }
+    },
+    {
+      "name": "Update Portfolio Data",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"title\": \"Full Stack Developer\",\n  \"bio\": \"Passionate developer with 5+ years of experience\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+1 234 567 8900\",\n  \"location\": \"San Francisco, CA\",\n  \"profileImage\": null,\n  \"skills\": [\"JavaScript\", \"TypeScript\", \"Angular\", \"Node.js\"],\n  \"projects\": [],\n  \"socialLinks\": {\n    \"linkedin\": \"https://linkedin.com/in/johndoe\",\n    \"github\": \"https://github.com/johndoe\",\n    \"twitter\": \"https://twitter.com/johndoe\",\n    \"website\": \"https://johndoe.com\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/portfolio",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "portfolio"]
+        }
+      }
+    },
+    {
+      "name": "Add Project",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"E-Commerce Platform\",\n  \"description\": \"A full-stack e-commerce application built with Angular and Node.js\",\n  \"technologies\": [\"Angular\", \"Node.js\", \"MongoDB\", \"Express\"],\n  \"image\": null,\n  \"link\": \"https://example.com/project\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/portfolio/projects",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "portfolio", "projects"]
+        }
+      }
+    },
+    {
+      "name": "Update Project",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated Project Title\",\n  \"description\": \"Updated description\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/portfolio/projects/:id",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "portfolio", "projects", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1234567890",
+              "description": "Project ID"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Project",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/api/portfolio/projects/:id",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "portfolio", "projects", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1234567890",
+              "description": "Project ID"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+

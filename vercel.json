@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build -- --configuration production",
+  "outputDirectory": "dist/portfolio-app/browser",
+  "installCommand": "npm install",
+  "framework": "angular",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+

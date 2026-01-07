@@ -1,0 +1,81 @@
+<header class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 transition-colors">
+  <div class="container mx-auto px-4 py-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        @if (isAuthenticated() && portfolioData(); as data) {
+          <div class="flex items-center space-x-4">
+            @if (data.profileImage) {
+              <img 
+                [src]="data.profileImage" 
+                alt="Profile" 
+                class="w-16 h-16 rounded-full object-cover border-4 border-indigo-500"
+              >
+            }
+            <div>
+              <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{{ data.name || 'Your Name' }}</h1>
+              <p class="text-gray-600 dark:text-gray-300">{{ data.title || 'Your Title' }}</p>
+            </div>
+          </div>
+        } @else {
+          <div>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Portfolio</h1>
+            <p class="text-gray-600 dark:text-gray-300">Welcome</p>
+          </div>
+        }
+      </div>
+      <nav class="hidden md:flex items-center space-x-6">
+        @if (!isAuthenticated()) {
+          <a routerLink="/signup" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold">Sign Up</a>
+          <a routerLink="/login" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold">Login</a>
+        }
+        
+        @if (isAuthenticated()) {
+          <a routerLink="/dashboard" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold">Dashboard</a>
+          <a routerLink="/jobs" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold">Jobs</a>
+          <a routerLink="/portfolio" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold">Portfolio</a>
+          
+          <!-- Dropdown Menu -->
+          <div class="relative dropdown-container">
+            <button 
+              (click)="toggleDropdown($event)"
+              class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold focus:outline-none"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+            
+            @if (isDropdownOpen()) {
+              <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50">
+                <a 
+                  routerLink="/profile"
+                  (click)="closeDropdown()"
+                  class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 hover:text-purple-600 dark:hover:text-purple-400 transition font-semibold"
+                >
+                  Profile
+                </a>
+                <a 
+                  routerLink="/settings"
+                  (click)="closeDropdown()"
+                  class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 hover:text-purple-600 dark:hover:text-purple-400 transition font-semibold"
+                >
+                  Settings
+                </a>
+                <hr class="my-2 border-gray-200 dark:border-gray-700">
+                <button 
+                  (click)="logout()"
+                  class="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-semibold flex items-center space-x-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </nav>
+    </div>
+  </div>
+</header>
