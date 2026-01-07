@@ -29,32 +29,52 @@ module.exports = async (req, res) => {
   
   // Priority 1: Check if we have path segments in query (Vercel catch-all pattern)
   // This is the most reliable way to get the path in Vercel serverless functions
-  if (req.query && req.query.path !== undefined) {
+  // For /api/portfolio/experience, req.query.path will be ['portfolio', 'experience']
+  if (req.query && req.query.path !== undefined && req.query.path !== null) {
     const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
-    fullPath = '/api/' + pathSegments.join('/');
-    console.log('Reconstructed path from query.path:', fullPath, 'segments:', pathSegments);
+    // Filter out empty segments
+    const validSegments = pathSegments.filter(s => s && s.trim() !== '');
+    if (validSegments.length > 0) {
+      fullPath = '/api/' + validSegments.join('/');
+      console.log('✓ Reconstructed path from query.path:', fullPath, 'segments:', validSegments);
+    }
   }
   
   // Priority 2: Try to extract from URL if query.path didn't work
   if (!fullPath && req.url) {
-    const urlPath = req.url.split('?')[0];
+    const urlPath = req.url.split('?')[0].split('#')[0]; // Remove query and hash
     if (urlPath && urlPath.startsWith('/api')) {
       fullPath = urlPath;
-      console.log('Using path from URL:', fullPath);
+      console.log('✓ Using path from URL:', fullPath);
     }
   }
   
   // Priority 3: Use req.path if it starts with /api
   if (!fullPath && req.path && req.path.startsWith('/api')) {
     fullPath = req.path;
-    console.log('Using path from req.path:', fullPath);
+    console.log('✓ Using path from req.path:', fullPath);
   }
   
-  // Priority 4: Fallback - reconstruct from req.path
+  // Priority 4: Use originalUrl if it starts with /api
+  if (!fullPath && req.originalUrl && req.originalUrl.startsWith('/api')) {
+    const originalPath = req.originalUrl.split('?')[0].split('#')[0];
+    if (originalPath.startsWith('/api')) {
+      fullPath = originalPath;
+      console.log('✓ Using path from originalUrl:', fullPath);
+    }
+  }
+  
+  // Priority 5: Fallback - reconstruct from req.path
   if (!fullPath) {
     const pathFromReq = req.path || '';
     fullPath = '/api' + (pathFromReq.startsWith('/') ? pathFromReq : '/' + pathFromReq);
-    console.log('Fallback reconstructed path:', fullPath);
+    console.log('⚠ Fallback reconstructed path:', fullPath);
+  }
+  
+  // Final validation
+  if (!fullPath || !fullPath.startsWith('/api')) {
+    console.error('❌ Failed to reconstruct valid path. Using fallback.');
+    fullPath = '/api' + (req.url ? req.url.split('?')[0] : '/unknown');
   }
   
   // Extract dynamic route parameters from path segments
@@ -142,13 +162,32 @@ module.exports = async (req, res) => {
     
     // Handle the request
     await new Promise((resolve, reject) => {
+      let responseSent = false;
+      
       // Override res.end to know when response is sent
       const originalEnd = res.end;
       res.end = function(...args) {
         clearTimeout(timeout);
+        responseSent = true;
         originalEnd.apply(this, args);
         resolve();
       };
+      
+      // Override res.status to track response
+      const originalStatus = res.status;
+      res.status = function(code) {
+        console.log(`Response status set to: ${code} for path: ${fullPath}`);
+        return originalStatus.apply(this, arguments);
+      };
+      
+      // Add a check after a short delay to see if Express handled it
+      setTimeout(() => {
+        if (!responseSent && !res.headersSent) {
+          console.warn('No response sent after 1 second, Express might not have matched the route');
+          console.warn('Final path being sent to Express:', fullPath);
+          console.warn('Request method:', req.method);
+        }
+      }, 1000);
       
       // Handle Express app
       app(req, res);
@@ -168,7 +207,8 @@ module.exports = async (req, res) => {
       res.status(500).json({ 
         error: 'Internal server error',
         message: error.message,
-        errorType: error.name
+        errorType: error.name,
+        path: fullPath
       });
     }
   }

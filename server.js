@@ -1107,6 +1107,18 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
+// 404 handler for unmatched API routes (should not happen in serverless, but helps with debugging)
+app.use('/api/*', (req, res) => {
+  console.error('404 - API route not found:', req.method, req.path);
+  console.error('Available routes should be handled by serverless functions');
+  res.status(404).json({ 
+    error: 'API endpoint not found',
+    path: req.path,
+    method: req.method,
+    message: 'This route should be handled by a serverless function. Check Vercel function logs.'
+  });
+});
+
 // Export app for serverless functions (Vercel)
 module.exports = app;
 
