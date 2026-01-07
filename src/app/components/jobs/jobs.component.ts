@@ -23,6 +23,7 @@ export class JobsComponent implements OnInit {
   // Filter state
   protected readonly isFilterModalOpen = signal(false);
   protected readonly selectedCategories = signal<Set<string>>(new Set());
+  protected readonly tempSelectedCategories = signal<Set<string>>(new Set()); // Temporary selection in modal
   
   // Get unique categories from all jobs
   protected readonly availableCategories = computed(() => {
@@ -85,32 +86,49 @@ export class JobsComponent implements OnInit {
   
   // Filter modal methods
   protected openFilterModal(): void {
+    // Initialize temp selection with current selection
+    this.tempSelectedCategories.set(new Set(this.selectedCategories()));
     this.isFilterModalOpen.set(true);
   }
   
   protected closeFilterModal(): void {
+    // Reset temp selection when closing without applying
+    this.tempSelectedCategories.set(new Set(this.selectedCategories()));
     this.isFilterModalOpen.set(false);
   }
   
   protected toggleCategory(category: string): void {
-    const selected = new Set(this.selectedCategories());
-    if (selected.has(category)) {
-      selected.delete(category);
+    // Update temporary selection (not the actual filter)
+    const tempSelected = new Set(this.tempSelectedCategories());
+    if (tempSelected.has(category)) {
+      tempSelected.delete(category);
     } else {
-      selected.add(category);
+      tempSelected.add(category);
     }
-    this.selectedCategories.set(selected);
+    this.tempSelectedCategories.set(tempSelected);
   }
   
   protected isCategorySelected(category: string): boolean {
+    // Check temp selection when modal is open, actual selection otherwise
+    if (this.isFilterModalOpen()) {
+      return this.tempSelectedCategories().has(category);
+    }
     return this.selectedCategories().has(category);
   }
   
   protected clearFilters(): void {
-    this.selectedCategories.set(new Set());
+    // Clear temporary selection in modal
+    if (this.isFilterModalOpen()) {
+      this.tempSelectedCategories.set(new Set());
+    } else {
+      // Clear actual filters when not in modal
+      this.selectedCategories.set(new Set());
+    }
   }
   
   protected applyFilters(): void {
+    // Apply temporary selection to actual filter
+    this.selectedCategories.set(new Set(this.tempSelectedCategories()));
     this.closeFilterModal();
   }
   
