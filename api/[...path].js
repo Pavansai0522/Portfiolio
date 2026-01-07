@@ -39,6 +39,19 @@ module.exports = async (req, res) => {
     }
   }
   
+  // Extract dynamic route parameters from path segments
+  // For routes like /api/portfolio/experience/:id, extract the ID
+  // Initialize req.params if it doesn't exist
+  if (!req.params) {
+    req.params = {};
+  }
+  const pathMatch = fullPath.match(/^\/api\/portfolio\/(experience|education|achievements|projects)\/([^\/\?]+)/);
+  if (pathMatch) {
+    const [, resourceType, resourceId] = pathMatch;
+    req.params.id = resourceId;
+    console.log(`Extracted dynamic parameter: id=${resourceId} for ${resourceType}`);
+  }
+  
   // Update all path-related properties
   req.url = fullPath + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
   req.path = fullPath;
@@ -130,10 +143,14 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('Error handling request:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     if (!res.headersSent) {
       res.status(500).json({ 
         error: 'Internal server error',
-        message: error.message 
+        message: error.message,
+        errorType: error.name
       });
     }
   }
