@@ -14,29 +14,47 @@ let connectionPromise = null;
 // The catch-all pattern [...path] means this handles all paths under /api
 module.exports = async (req, res) => {
   // Log request for debugging
-  console.log('=== API Request received ===');
+  console.log('=== API Request received (catch-all) ===');
   console.log('Method:', req.method);
   console.log('URL:', req.url);
   console.log('Path:', req.path);
   console.log('Original URL:', req.originalUrl);
-  console.log('Query:', req.query);
-  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Query:', JSON.stringify(req.query, null, 2));
+  console.log('Query.path:', req.query?.path);
+  console.log('Query.path type:', Array.isArray(req.query?.path) ? 'array' : typeof req.query?.path);
   
   // In Vercel, when using [...path], the path segments are in req.query.path
-  // But Express might have already parsed it. Let's reconstruct the full path
-  let fullPath = req.path;
+  // For /api/portfolio/experience, req.query.path will be ['portfolio', 'experience']
+  let fullPath = null;
   
-  // If path doesn't start with /api, we need to add it
-  // Vercel routes /api/auth/login to this handler, and the path might be /auth/login
-  if (!fullPath.startsWith('/api')) {
-    // Check if we have path segments in query (Vercel catch-all)
-    if (req.query && req.query.path) {
-      const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
-      fullPath = '/api/' + pathSegments.join('/');
-    } else {
-      // Reconstruct from current path
-      fullPath = '/api' + (fullPath.startsWith('/') ? fullPath : '/' + fullPath);
+  // Priority 1: Check if we have path segments in query (Vercel catch-all pattern)
+  // This is the most reliable way to get the path in Vercel serverless functions
+  if (req.query && req.query.path !== undefined) {
+    const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
+    fullPath = '/api/' + pathSegments.join('/');
+    console.log('Reconstructed path from query.path:', fullPath, 'segments:', pathSegments);
+  }
+  
+  // Priority 2: Try to extract from URL if query.path didn't work
+  if (!fullPath && req.url) {
+    const urlPath = req.url.split('?')[0];
+    if (urlPath && urlPath.startsWith('/api')) {
+      fullPath = urlPath;
+      console.log('Using path from URL:', fullPath);
     }
+  }
+  
+  // Priority 3: Use req.path if it starts with /api
+  if (!fullPath && req.path && req.path.startsWith('/api')) {
+    fullPath = req.path;
+    console.log('Using path from req.path:', fullPath);
+  }
+  
+  // Priority 4: Fallback - reconstruct from req.path
+  if (!fullPath) {
+    const pathFromReq = req.path || '';
+    fullPath = '/api' + (pathFromReq.startsWith('/') ? pathFromReq : '/' + pathFromReq);
+    console.log('Fallback reconstructed path:', fullPath);
   }
   
   // Extract dynamic route parameters from path segments
