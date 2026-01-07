@@ -34,11 +34,11 @@ module.exports = async (req, res) => {
       }
     }
     
-    // Extract dynamic route parameters (e.g., /api/portfolio/experience/:id)
+    // Extract dynamic route parameters (e.g., /api/portfolio/experience/:id or /api/portfolio/items/:id)
     if (!req.params) {
       req.params = {};
     }
-    const pathMatch = fullPath.match(/^\/api\/portfolio\/(experience|education|achievements|projects)\/([^\/\?]+)/);
+    const pathMatch = fullPath.match(/^\/api\/portfolio\/(experience|education|achievements|projects|items)\/([^\/\?]+)/);
     if (pathMatch) {
       const [, resourceType, resourceId] = pathMatch;
       req.params.id = resourceId;

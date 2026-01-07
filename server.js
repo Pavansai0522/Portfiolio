@@ -530,6 +530,232 @@ app.delete('/api/portfolio/projects/:id', authenticateToken, async (req, res) =>
   }
 });
 
+// ==================== Unified Portfolio Items API ====================
+// This unified endpoint handles experience, education, and achievements
+// POST /api/portfolio/items - Add a new item (experience, education, or achievement)
+app.post('/api/portfolio/items', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userEmail = req.user.email;
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+    
+    const { type } = req.body;
+    if (!type || !['experience', 'education', 'achievement'].includes(type)) {
+      return res.status(400).json({ 
+        error: 'Invalid type. Must be "experience", "education", or "achievement"' 
+      });
+    }
+    
+    const portfolio = await Portfolio.getPortfolio(userId, userEmail);
+    
+    let newItem;
+    let itemData;
+    
+    if (type === 'experience') {
+      // Validate required fields
+      if (!req.body.company || !req.body.position) {
+        return res.status(400).json({ error: 'Company and Position are required for experience' });
+      }
+      
+      newItem = {
+        company: req.body.company || '',
+        position: req.body.position || '',
+        description: req.body.description || '',
+        startDate: req.body.startDate || '',
+        endDate: req.body.endDate || '',
+        isCurrent: req.body.isCurrent || false,
+        location: req.body.location || ''
+      };
+      
+      portfolio.experience.push(newItem);
+      await portfolio.save();
+      
+      const addedItem = portfolio.experience[portfolio.experience.length - 1];
+      itemData = addedItem.toObject();
+      itemData.id = itemData._id.toString();
+      
+    } else if (type === 'education') {
+      // Validate required fields
+      if (!req.body.institution || !req.body.degree) {
+        return res.status(400).json({ error: 'Institution and Degree are required for education' });
+      }
+      
+      newItem = {
+        institution: req.body.institution || '',
+        degree: req.body.degree || '',
+        field: req.body.field || '',
+        description: req.body.description || '',
+        startDate: req.body.startDate || '',
+        endDate: req.body.endDate || '',
+        isCurrent: req.body.isCurrent || false,
+        location: req.body.location || ''
+      };
+      
+      portfolio.education.push(newItem);
+      await portfolio.save();
+      
+      const addedItem = portfolio.education[portfolio.education.length - 1];
+      itemData = addedItem.toObject();
+      itemData.id = itemData._id.toString();
+      
+    } else if (type === 'achievement') {
+      // Validate required fields
+      if (!req.body.title) {
+        return res.status(400).json({ error: 'Title is required for achievement' });
+      }
+      
+      newItem = {
+        title: req.body.title || '',
+        issuer: req.body.issuer || '',
+        description: req.body.description || '',
+        date: req.body.date || '',
+        url: req.body.url || '',
+        type: req.body.type || 'achievement'
+      };
+      
+      portfolio.achievements.push(newItem);
+      await portfolio.save();
+      
+      const addedItem = portfolio.achievements[portfolio.achievements.length - 1];
+      itemData = addedItem.toObject();
+      itemData.id = itemData._id.toString();
+    }
+    
+    res.status(201).json(itemData);
+  } catch (error) {
+    console.error(`Error adding ${req.body.type}:`, error);
+    res.status(500).json({ error: `Failed to add ${req.body.type}` });
+  }
+});
+
+// PUT /api/portfolio/items/:id - Update an item (experience, education, or achievement)
+app.put('/api/portfolio/items/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userEmail = req.user.email;
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+    
+    const { type } = req.body;
+    if (!type || !['experience', 'education', 'achievement'].includes(type)) {
+      return res.status(400).json({ 
+        error: 'Invalid type. Must be "experience", "education", or "achievement"' 
+      });
+    }
+    
+    const portfolio = await Portfolio.getPortfolio(userId, userEmail);
+    const itemId = req.params.id;
+    
+    let item;
+    let itemData;
+    
+    if (type === 'experience') {
+      item = portfolio.experience.id(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Experience not found' });
+      }
+      
+      Object.keys(req.body).forEach(key => {
+        if (key !== 'id' && key !== '_id' && key !== '__v' && key !== 'type') {
+          item[key] = req.body[key];
+        }
+      });
+      
+      await portfolio.save();
+      itemData = item.toObject();
+      itemData.id = itemData._id.toString();
+      
+    } else if (type === 'education') {
+      item = portfolio.education.id(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Education not found' });
+      }
+      
+      Object.keys(req.body).forEach(key => {
+        if (key !== 'id' && key !== '_id' && key !== '__v' && key !== 'type') {
+          item[key] = req.body[key];
+        }
+      });
+      
+      await portfolio.save();
+      itemData = item.toObject();
+      itemData.id = itemData._id.toString();
+      
+    } else if (type === 'achievement') {
+      item = portfolio.achievements.id(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Achievement not found' });
+      }
+      
+      Object.keys(req.body).forEach(key => {
+        if (key !== 'id' && key !== '_id' && key !== '__v' && key !== 'type') {
+          item[key] = req.body[key];
+        }
+      });
+      
+      await portfolio.save();
+      itemData = item.toObject();
+      itemData.id = itemData._id.toString();
+    }
+    
+    res.json(itemData);
+  } catch (error) {
+    console.error(`Error updating ${req.body.type}:`, error);
+    res.status(500).json({ error: `Failed to update ${req.body.type}` });
+  }
+});
+
+// DELETE /api/portfolio/items/:id - Delete an item (experience, education, or achievement)
+app.delete('/api/portfolio/items/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userEmail = req.user.email;
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+    
+    const { type } = req.query; // Get type from query parameter for DELETE
+    if (!type || !['experience', 'education', 'achievement'].includes(type)) {
+      return res.status(400).json({ 
+        error: 'Invalid type. Must be "experience", "education", or "achievement". Provide as query parameter: ?type=experience' 
+      });
+    }
+    
+    const portfolio = await Portfolio.getPortfolio(userId, userEmail);
+    const itemId = req.params.id;
+    
+    if (type === 'experience') {
+      const item = portfolio.experience.id(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Experience not found' });
+      }
+      portfolio.experience.pull(itemId);
+    } else if (type === 'education') {
+      const item = portfolio.education.id(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Education not found' });
+      }
+      portfolio.education.pull(itemId);
+    } else if (type === 'achievement') {
+      const item = portfolio.achievements.id(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Achievement not found' });
+      }
+      portfolio.achievements.pull(itemId);
+    }
+    
+    await portfolio.save();
+    
+    res.json({ message: `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully` });
+  } catch (error) {
+    console.error(`Error deleting ${req.query.type}:`, error);
+    res.status(500).json({ error: `Failed to delete ${req.query.type}` });
+  }
+});
+
 // ==================== Experience Routes ====================
 
 // POST /api/portfolio/experience - Add a new experience for authenticated user
