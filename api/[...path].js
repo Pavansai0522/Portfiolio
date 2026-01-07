@@ -14,14 +14,31 @@ let connectionPromise = null;
 // The catch-all pattern [...path] means this handles all paths under /api
 module.exports = async (req, res) => {
   // Log request for debugging
-  console.log('API Request:', req.method, req.url, req.path);
+  console.log('API Request received:', {
+    method: req.method,
+    url: req.url,
+    path: req.path,
+    originalUrl: req.originalUrl,
+    query: req.query
+  });
   
-  // Ensure path starts with /api for Express routing
-  // Vercel might strip /api when routing to serverless function
+  // Vercel passes the path after /api to the catch-all handler
+  // So /api/auth/login becomes /auth/login in req.path
+  // We need to reconstruct the full path for Express
+  const originalPath = req.path;
   if (!req.path.startsWith('/api')) {
-    req.url = '/api' + req.url;
-    req.path = '/api' + req.path;
+    // Reconstruct the full API path
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+    req.path = '/api' + (req.path.startsWith('/') ? req.path : '/' + req.path);
+    req.originalUrl = '/api' + (req.originalUrl.startsWith('/') ? req.originalUrl : '/' + req.originalUrl);
   }
+  
+  console.log('Normalized path:', {
+    method: req.method,
+    url: req.url,
+    path: req.path,
+    originalUrl: req.originalUrl
+  });
   
   // Check if already connected
   if (mongoose.connection.readyState === 1) {

@@ -974,6 +974,24 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// 404 handler for unmatched API routes (must be after all API route definitions)
+app.use('/api/*', (req, res) => {
+  console.log('404 - API route not found:', req.method, req.path);
+  res.status(404).json({ 
+    error: 'API endpoint not found',
+    path: req.path,
+    method: req.method,
+    availableEndpoints: [
+      'POST /api/auth/register',
+      'POST /api/auth/login',
+      'GET /api/auth/verify',
+      'GET /api/auth/verify-email',
+      'POST /api/auth/resend-verification',
+      'GET /api/health'
+    ]
+  });
+});
+
 // Serve static files from Angular build (for production deployment)
 // This allows serving the frontend from the same server
 if (process.env.NODE_ENV === 'production') {
@@ -992,10 +1010,16 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(distPath));
     
     // Handle Angular routing - return index.html for all non-API routes
+    // This should only run in non-serverless environments
+    // In Vercel, API routes are handled by serverless functions
     app.get('*', (req, res) => {
       // Don't serve index.html for API routes
       if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
+        return res.status(404).json({ 
+          error: 'API endpoint not found',
+          path: req.path,
+          method: req.method
+        });
       }
       const indexPath = path.join(distPath, 'index.html');
       if (fs.existsSync(indexPath)) {
