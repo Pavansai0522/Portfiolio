@@ -329,16 +329,28 @@ app.put('/api/portfolio', authenticateToken, async (req, res) => {
       return res.status(401).json({ error: 'User ID not found in token' });
     }
     
+    console.log('PUT /api/portfolio - User ID:', userId);
+    console.log('PUT /api/portfolio - Request body keys:', Object.keys(req.body));
+    
     const portfolio = await Portfolio.getPortfolio(userId, userEmail);
+    console.log('PUT /api/portfolio - Portfolio found:', !!portfolio);
     
     // Update portfolio fields (exclude userId, projects, experience, education, achievements, and MongoDB fields)
+    const excludedKeys = ['projects', 'experience', 'education', 'achievements', '_id', '__v', 'userId'];
     Object.keys(req.body).forEach(key => {
-      if (key !== 'projects' && key !== 'experience' && key !== 'education' && key !== 'achievements' && key !== '_id' && key !== '__v' && key !== 'userId') {
-        portfolio[key] = req.body[key];
+      if (!excludedKeys.includes(key)) {
+        // Handle socialLinks specially - ensure it's an object
+        if (key === 'socialLinks' && req.body[key]) {
+          portfolio[key] = req.body[key];
+        } else if (key !== 'socialLinks') {
+          portfolio[key] = req.body[key];
+        }
       }
     });
     
+    console.log('PUT /api/portfolio - Attempting to save portfolio...');
     await portfolio.save();
+    console.log('PUT /api/portfolio - Portfolio saved successfully');
     
     // Convert to object and format projects, experience, education, and achievements
     const portfolioData = portfolio.toObject();
@@ -370,7 +382,28 @@ app.put('/api/portfolio', authenticateToken, async (req, res) => {
     res.json(portfolioData);
   } catch (error) {
     console.error('Error updating portfolio data:', error);
-    res.status(500).json({ error: 'Failed to update portfolio data' });
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Provide more detailed error information
+    let errorMessage = 'Failed to update portfolio data';
+    let errorDetails = error.message;
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation error';
+      errorDetails = Object.values(error.errors || {}).map((e: any) => e.message).join(', ');
+    } else if (error.name === 'CastError') {
+      errorMessage = 'Invalid data format';
+      errorDetails = error.message;
+    }
+    
+    res.status(500).json({ 
+      error: errorMessage,
+      details: errorDetails,
+      errorType: error.name
+    });
   }
 });
 
