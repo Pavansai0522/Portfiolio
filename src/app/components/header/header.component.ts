@@ -21,6 +21,7 @@ export class HeaderComponent {
   protected readonly isAuthenticated = this.authService.isAuthenticated;
   protected readonly currentUser = this.authService.currentUser;
   protected readonly isDropdownOpen = signal(false);
+  protected readonly isMobileMenuOpen = signal(false);
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -42,5 +43,13 @@ export class HeaderComponent {
 
   protected closeDropdown(): void {
     this.isDropdownOpen.set(false);
+  }
+
+  protected toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update(value => !value);
+  }
+
+  protected closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
   }
 }

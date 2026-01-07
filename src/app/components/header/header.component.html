@@ -8,21 +8,22 @@
               <img 
                 [src]="data.profileImage" 
                 alt="Profile" 
-                class="w-16 h-16 rounded-full object-cover border-4 border-indigo-500"
+                class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 sm:border-3 md:border-4 border-indigo-500"
               >
             }
             <div>
-              <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{{ data.name || 'Your Name' }}</h1>
-              <p class="text-gray-600 dark:text-gray-300">{{ data.title || 'Your Title' }}</p>
+              <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">{{ data.name || 'Your Name' }}</h1>
+              <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">{{ data.title || 'Your Title' }}</p>
             </div>
           </div>
         } @else {
           <div>
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Portfolio</h1>
-            <p class="text-gray-600 dark:text-gray-300">Welcome</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Portfolio</h1>
+            <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Welcome</p>
           </div>
         }
       </div>
+      <!-- Desktop Navigation -->
       <nav class="hidden md:flex items-center space-x-6">
         @if (!isAuthenticated()) {
           <a routerLink="/signup" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold">Sign Up</a>
@@ -76,6 +77,102 @@
           </div>
         }
       </nav>
+
+      <!-- Mobile Menu Button -->
+      <button 
+        (click)="toggleMobileMenu()"
+        class="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition focus:outline-none"
+        aria-label="Toggle menu"
+      >
+        @if (isMobileMenuOpen()) {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        } @else {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        }
+      </button>
+    </div>
+
+    <!-- Mobile Navigation Menu -->
+    @if (isMobileMenuOpen()) {
+      <nav class="md:hidden mt-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div class="flex flex-col space-y-4">
+          @if (!isAuthenticated()) {
+            <a 
+              routerLink="/signup" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Sign Up
+            </a>
+            <a 
+              routerLink="/login" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Login
+            </a>
+          }
+          
+          @if (isAuthenticated()) {
+            <a 
+              routerLink="/dashboard" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Dashboard
+            </a>
+            <a 
+              routerLink="/jobs" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Jobs
+            </a>
+            <a 
+              routerLink="/portfolio" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Portfolio
+            </a>
+            <a 
+              routerLink="/profile" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Profile
+            </a>
+            <a 
+              routerLink="/settings" 
+              (click)="closeMobileMenu()"
+              routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+              class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition font-bold py-2"
+            >
+              Settings
+            </a>
+            <button 
+              (click)="logout(); closeMobileMenu()"
+              class="w-full text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-semibold flex items-center space-x-2 py-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+              <span>Logout</span>
+            </button>
+          }
+        </div>
+      </nav>
+    }
     </div>
   </div>
 </header>
