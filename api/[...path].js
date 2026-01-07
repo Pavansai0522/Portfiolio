@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
     await Promise.race([
       connectionPromise,
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout after 10s')), 10000)
+        setTimeout(() => reject(new Error('Connection timeout after 15s')), 15000)
       )
     ]);
     console.log('Database connection established');

@@ -30,10 +30,13 @@ const connectDB = async () => {
   cachedConnection = mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000, // 10 second timeout
+    serverSelectionTimeoutMS: 15000, // 15 second timeout for Atlas
     socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    connectTimeoutMS: 15000, // 15 second connection timeout
     maxPoolSize: 1, // Limit connections for serverless
     minPoolSize: 0, // Allow connection pool to close
+    retryWrites: true,
+    w: 'majority'
   }).then((conn) => {
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     cachedConnection = null; // Clear cache on success

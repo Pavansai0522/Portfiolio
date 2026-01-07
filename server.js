@@ -939,31 +939,24 @@ app.get('/api/health', async (req, res) => {
     const dbStatus = mongoose.connection.readyState;
     const dbStatusText = ['disconnected', 'connected', 'connecting', 'disconnecting'][dbStatus] || 'unknown';
     
-    // Try to connect if not connected
-    let connectionInfo = {
+    // Return status immediately without blocking
+    const connectionInfo = {
       status: dbStatusText,
       hasMongoUri: !!process.env.MONGODB_URI,
-      mongoUriFormat: process.env.MONGODB_URI ? 'present' : 'missing'
+      readyState: dbStatus
     };
     
-    // If disconnected and MONGODB_URI is set, try to connect
-    if (dbStatus === 0 && process.env.MONGODB_URI) {
-      try {
-        const connectDB = require('./config/database');
-        await Promise.race([
-          connectDB(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Connection timeout after 5s')), 5000)
-          )
-        ]);
-        connectionInfo.status = 'connected';
-        connectionInfo.message = 'Connection established';
-      } catch (err) {
-        connectionInfo.status = 'disconnected';
-        connectionInfo.error = err.message;
-        connectionInfo.errorType = err.name;
-      }
-    } else if (!process.env.MONGODB_URI) {
+    // If connecting, don't wait - just report status
+    if (dbStatus === 2) {
+      connectionInfo.message = 'Connection in progress (this may take a few seconds on cold start)';
+    } else if (dbStatus === 1) {
+      connectionInfo.message = 'Connected';
+      connectionInfo.host = mongoose.connection.host;
+    } else if (dbStatus === 0) {
+      connectionInfo.message = 'Not connected - connection will be established on first API request';
+    }
+    
+    if (!process.env.MONGODB_URI) {
       connectionInfo.error = 'MONGODB_URI environment variable is not set';
     }
     
