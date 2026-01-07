@@ -65,7 +65,11 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Connect to MongoDB
-connectDB();
+// Note: In serverless environments (Vercel), connection is handled in api/[...path].js
+// This call is for local development only
+if (require.main === module) {
+  connectDB();
+}
 
 // API Routes
 
