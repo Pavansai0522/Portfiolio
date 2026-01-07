@@ -212,7 +212,7 @@
                   />
                   <span class="ml-3 text-gray-900 dark:text-white font-medium">{{ category }}</span>
                   <span class="ml-auto text-sm text-gray-500 dark:text-gray-400">
-                    ({{ allJobs().filter(j => j.category === category).length }})
+                    ({{ getJobCountForCategory(category) }})
                   </span>
                 </label>
               }

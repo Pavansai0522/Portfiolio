@@ -121,4 +121,8 @@ export class JobsComponent implements OnInit {
   protected getSelectedCategoriesArray(): string[] {
     return Array.from(this.selectedCategories());
   }
+  
+  protected getJobCountForCategory(category: string): number {
+    return this.allJobs().filter(job => job.category === category).length;
+  }
 }
