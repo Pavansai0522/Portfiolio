@@ -13,6 +13,16 @@ let connectionPromise = null;
 // Vercel will handle routing /api/* requests to this function
 // The catch-all pattern [...path] means this handles all paths under /api
 module.exports = async (req, res) => {
+  // Log request for debugging
+  console.log('API Request:', req.method, req.url, req.path);
+  
+  // Ensure path starts with /api for Express routing
+  // Vercel might strip /api when routing to serverless function
+  if (!req.path.startsWith('/api')) {
+    req.url = '/api' + req.url;
+    req.path = '/api' + req.path;
+  }
+  
   // Check if already connected
   if (mongoose.connection.readyState === 1) {
     // Already connected, handle request immediately
