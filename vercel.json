@@ -1,8 +1,7 @@
 {
   "buildCommand": "npm run build:prod",
   "outputDirectory": "dist/portfolio-app/browser",
-  "installCommand": "npm install",
-  "framework": "angular",
+  "installCommand": "NODE_ENV=development npm install",
   "rewrites": [
     {
       "source": "/(.*)",
