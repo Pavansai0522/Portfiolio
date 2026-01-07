@@ -3,14 +3,23 @@
 
 const app = require('../server');
 
-// For Vercel catch-all routes [...path], the path parameter contains segments after /api
-// But our Express routes are defined with /api prefix, so we need to restore it
+// For Vercel catch-all routes [...path], requests to /api/* are routed here
+// The original URL path is preserved in req.url
 module.exports = (req, res) => {
-  // Restore the /api prefix if it was stripped by Vercel
+  // Log for debugging (will appear in Vercel function logs)
+  console.log('API Request:', req.method, req.url, req.path);
+  
+  // Ensure the path starts with /api for Express routes
+  const originalUrl = req.url;
+  const originalPath = req.path;
+  
   if (!req.path.startsWith('/api')) {
-    req.url = '/api' + req.url;
-    req.path = '/api' + req.path;
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+    req.path = '/api' + (req.path.startsWith('/') ? req.path : '/' + req.path);
+    console.log('Adjusted path:', req.path);
   }
+  
+  // Handle the request with Express
   return app(req, res);
 };
 

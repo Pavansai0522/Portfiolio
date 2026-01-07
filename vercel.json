@@ -4,7 +4,7 @@
   "installCommand": "NODE_ENV=development npm install",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api).*)",
       "destination": "/index.html"
     }
   ]
