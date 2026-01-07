@@ -14,8 +14,29 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 // CORS configuration - allow frontend URL from environment or default to localhost
+// For Vercel, allow requests from any origin (or specify your Vercel domain)
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? [process.env.FRONTEND_URL, 'http://localhost:4200']
+  : ['http://localhost:4200'];
+
+// If FRONTEND_URL contains wildcard or is not set, allow all origins (for Vercel)
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins if FRONTEND_URL is not set (for Vercel deployment)
+    if (!process.env.FRONTEND_URL) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for Vercel deployment
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -961,8 +982,13 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`📦 Using MongoDB database`);
-});
+// Export app for serverless functions (Vercel)
+module.exports = app;
+
+// Start server only if not in serverless environment
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Backend server running on http://localhost:${PORT}`);
+    console.log(`📦 Using MongoDB database`);
+  });
+}
