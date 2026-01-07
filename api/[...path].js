@@ -4,39 +4,31 @@
 const app = require('../server');
 
 // For Vercel catch-all routes [...path], requests to /api/* are routed here
-// The path segments are available in req.query.path or we reconstruct from req.url
-module.exports = async (req, res) => {
-  try {
-    // Log for debugging
-    console.log('API Request received:', {
-      method: req.method,
-      url: req.url,
-      path: req.path,
-      originalUrl: req.originalUrl,
-      query: req.query
-    });
-    
-    // Vercel preserves the full URL in req.url, so Express should handle it correctly
-    // But let's ensure the path is correct for Express routing
-    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    const pathname = url.pathname;
-    
-    // Ensure path starts with /api (Express routes are defined with /api prefix)
-    if (!pathname.startsWith('/api')) {
-      req.url = '/api' + pathname;
-      req.path = '/api' + pathname;
-    } else {
-      req.url = pathname;
-      req.path = pathname;
-    }
-    
-    console.log('Processing with Express:', req.method, req.path);
-    
-    // Handle the request with Express
-    app(req, res);
-  } catch (error) {
-    console.error('Error in API handler:', error);
-    res.status(500).json({ error: 'Internal server error', message: error.message });
+// The full path including /api is preserved in req.url
+module.exports = (req, res) => {
+  // Log for debugging
+  console.log('API Handler - Method:', req.method, 'URL:', req.url, 'Path:', req.path);
+  
+  // Vercel's catch-all route preserves the full path in req.url
+  // Express routes are defined with /api prefix, so this should work directly
+  // But let's ensure req.path matches req.url for Express routing
+  if (req.url && !req.path) {
+    // Extract path from URL if path is not set
+    const urlMatch = req.url.match(/^[^?]*/);
+    req.path = urlMatch ? urlMatch[0] : req.url;
   }
+  
+  // Ensure path starts with /api
+  if (req.path && !req.path.startsWith('/api')) {
+    req.path = '/api' + req.path;
+  }
+  if (req.url && !req.url.startsWith('/api') && !req.url.includes('://')) {
+    req.url = '/api' + req.url;
+  }
+  
+  console.log('Forwarding to Express - Method:', req.method, 'Path:', req.path);
+  
+  // Forward to Express app
+  return app(req, res);
 };
 
