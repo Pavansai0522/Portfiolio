@@ -139,29 +139,39 @@ app.post('/api/auth/register', async (req, res) => {
 // POST /api/auth/login - Login user
 app.post('/api/auth/login', async (req, res) => {
   try {
+    console.log('Login route handler called');
+    console.log('Request body:', JSON.stringify(req.body));
+    
     const { email, password } = req.body;
 
     // Validation
     if (!email || !password) {
+      console.log('Validation failed: missing email or password');
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    console.log('Finding user by email:', email);
     // Find user by email
     const user = await User.findByEmail(email);
     if (!user) {
+      console.log('User not found');
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    console.log('User found, comparing password');
     // Compare password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      console.log('Invalid password');
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    console.log('Password valid, updating last login');
     // Update last login
     user.lastLogin = new Date();
     await user.save();
 
+    console.log('Generating JWT token');
     // Generate JWT token - convert ObjectId to string
     const token = jwt.sign(
       { userId: user._id.toString(), email: user.email },
@@ -169,6 +179,7 @@ app.post('/api/auth/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    console.log('Login successful');
     res.json({
       message: 'Login successful',
       token,
@@ -180,7 +191,16 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Error logging in user:', error);
-    res.status(500).json({ error: 'Failed to login' });
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to login',
+        details: error.message,
+        errorType: error.name
+      });
+    }
   }
 });
 

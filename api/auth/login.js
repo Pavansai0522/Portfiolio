@@ -1,17 +1,7 @@
 // Vercel Serverless Function for POST /api/auth/login
-let app;
-let connectDB;
-let mongoose;
-
-// Lazy load to catch initialization errors
-try {
-  app = require('../../server');
-  connectDB = require('../../config/database');
-  mongoose = require('mongoose');
-} catch (error) {
-  console.error('Failed to load dependencies:', error);
-  throw error;
-}
+const app = require('../../server');
+const connectDB = require('../../config/database');
+const mongoose = require('mongoose');
 
 let connectionPromise = null;
 
@@ -21,6 +11,7 @@ module.exports = async (req, res) => {
     console.log('Method:', req.method);
     console.log('URL:', req.url);
     console.log('Path:', req.path);
+    console.log('Body:', JSON.stringify(req.body));
     
     // Ensure database is connected
     if (mongoose.connection.readyState !== 1) {
@@ -43,6 +34,7 @@ module.exports = async (req, res) => {
         console.log('Database connected successfully');
       } catch (err) {
         console.error('Database connection error:', err.message);
+        console.error('Error stack:', err.stack);
         if (!res.headersSent) {
           return res.status(500).json({ error: 'Database connection failed', details: err.message });
         }
@@ -59,16 +51,45 @@ module.exports = async (req, res) => {
     console.log('Routing to Express with path:', req.path);
     
     // Handle the request with Express
-    app(req, res);
+    // Wrap in Promise to handle async errors
+    return new Promise((resolve, reject) => {
+      // Set up error handlers
+      const originalEnd = res.end;
+      res.end = function(...args) {
+        originalEnd.apply(this, args);
+        resolve();
+      };
+      
+      // Handle Express errors
+      const errorHandler = (err) => {
+        console.error('Express error in login handler:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ 
+            error: 'Internal server error', 
+            details: err.message 
+          });
+        }
+        resolve();
+      };
+      
+      // Call Express app
+      try {
+        app(req, res);
+      } catch (err) {
+        errorHandler(err);
+      }
+    });
     
   } catch (error) {
     console.error('Unhandled error in login handler:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     if (!res.headersSent) {
       return res.status(500).json({ 
         error: 'Internal server error', 
         details: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        errorType: error.name
       });
     }
   }
