@@ -14,31 +14,41 @@ let connectionPromise = null;
 // The catch-all pattern [...path] means this handles all paths under /api
 module.exports = async (req, res) => {
   // Log request for debugging
-  console.log('API Request received:', {
-    method: req.method,
-    url: req.url,
-    path: req.path,
-    originalUrl: req.originalUrl,
-    query: req.query
-  });
+  console.log('=== API Request received ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Path:', req.path);
+  console.log('Original URL:', req.originalUrl);
+  console.log('Query:', req.query);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
   
-  // Vercel passes the path after /api to the catch-all handler
-  // So /api/auth/login becomes /auth/login in req.path
-  // We need to reconstruct the full path for Express
-  const originalPath = req.path;
-  if (!req.path.startsWith('/api')) {
-    // Reconstruct the full API path
-    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
-    req.path = '/api' + (req.path.startsWith('/') ? req.path : '/' + req.path);
-    req.originalUrl = '/api' + (req.originalUrl.startsWith('/') ? req.originalUrl : '/' + req.originalUrl);
+  // In Vercel, when using [...path], the path segments are in req.query.path
+  // But Express might have already parsed it. Let's reconstruct the full path
+  let fullPath = req.path;
+  
+  // If path doesn't start with /api, we need to add it
+  // Vercel routes /api/auth/login to this handler, and the path might be /auth/login
+  if (!fullPath.startsWith('/api')) {
+    // Check if we have path segments in query (Vercel catch-all)
+    if (req.query && req.query.path) {
+      const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
+      fullPath = '/api/' + pathSegments.join('/');
+    } else {
+      // Reconstruct from current path
+      fullPath = '/api' + (fullPath.startsWith('/') ? fullPath : '/' + fullPath);
+    }
   }
   
-  console.log('Normalized path:', {
-    method: req.method,
-    url: req.url,
-    path: req.path,
-    originalUrl: req.originalUrl
-  });
+  // Update all path-related properties
+  req.url = fullPath + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
+  req.path = fullPath;
+  req.originalUrl = fullPath + (req.originalUrl.includes('?') ? req.originalUrl.substring(req.originalUrl.indexOf('?')) : '');
+  
+  console.log('=== Normalized path ===');
+  console.log('Full path:', fullPath);
+  console.log('Updated URL:', req.url);
+  console.log('Updated path:', req.path);
+  console.log('Updated originalUrl:', req.originalUrl);
   
   // Check if already connected
   if (mongoose.connection.readyState === 1) {
@@ -89,6 +99,43 @@ module.exports = async (req, res) => {
   }
   
   // Handle the request with Express
-  return app(req, res);
+  // Wrap in try-catch to handle any errors
+  try {
+    // Set a timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) {
+        console.error('Request timeout - no response sent');
+        res.status(504).json({ error: 'Request timeout' });
+      }
+    }, 25000); // 25 second timeout
+    
+    // Handle the request
+    await new Promise((resolve, reject) => {
+      // Override res.end to know when response is sent
+      const originalEnd = res.end;
+      res.end = function(...args) {
+        clearTimeout(timeout);
+        originalEnd.apply(this, args);
+        resolve();
+      };
+      
+      // Handle Express app
+      app(req, res);
+      
+      // If response is already sent (synchronous), resolve immediately
+      if (res.headersSent) {
+        clearTimeout(timeout);
+        resolve();
+      }
+    });
+  } catch (error) {
+    console.error('Error handling request:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: error.message 
+      });
+    }
+  }
 };
 
