@@ -68,7 +68,7 @@ const authenticateToken = (req, res, next) => {
 // Note: In serverless environments (Vercel), connection is handled in api/[...path].js
 // This call is for local development only
 if (require.main === module) {
-  connectDB();
+connectDB();
 }
 
 // API Routes
@@ -903,10 +903,22 @@ app.get('/api/jobs', async (req, res) => {
     
     // Get all jobs and shuffle them to show different ones on each refresh
     const allJobs = data.jobs || [];
+    console.log(`Remotive API returned ${allJobs.length} jobs`);
+    
+    if (allJobs.length === 0) {
+      return res.json({
+        success: true,
+        jobs: [],
+        total: 0,
+        message: 'No jobs found for the search query'
+      });
+    }
+    
     const shuffledJobs = shuffleArray(allJobs);
     
-    // Format jobs from Remotive API response (take 10 random jobs)
-    const jobs = shuffledJobs.slice(0, 10).map((job, index) => ({
+    // Format jobs from Remotive API response (take up to 50 jobs for better variety)
+    const maxJobs = Math.min(50, shuffledJobs.length);
+    const jobs = shuffledJobs.slice(0, maxJobs).map((job, index) => ({
       id: job.id || index + 1,
       title: job.title || 'Untitled Position',
       company: job.company_name || 'Company Not Specified',
