@@ -413,7 +413,7 @@ app.put('/api/portfolio', authenticateToken, async (req, res) => {
     // Handle validation errors
     if (error.name === 'ValidationError') {
       errorMessage = 'Validation error';
-      errorDetails = Object.values(error.errors || {}).map((e: any) => e.message).join(', ');
+      errorDetails = Object.values(error.errors || {}).map((e) => e.message).join(', ');
     } else if (error.name === 'CastError') {
       errorMessage = 'Invalid data format';
       errorDetails = error.message;
