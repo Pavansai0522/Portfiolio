@@ -158,11 +158,16 @@ export class ApiService {
     const formData = new FormData();
     formData.append('resume', file, file.name);
     
-    const authHeader = this.authService.getAuthHeader();
-    const headers = new HttpHeaders(authHeader as any);
+    // Get auth token and add to headers
+    const token = this.authService.getAuthHeader();
+    let headers = new HttpHeaders();
+    if (token && token['Authorization']) {
+      headers = headers.set('Authorization', token['Authorization']);
+    }
     
     return this.http.post<ResumeUploadResponse>(`${this.apiUrl}/resumes/upload`, formData, {
       headers: headers
+      // Note: Don't set Content-Type header - let browser set it with boundary for multipart/form-data
     });
   }
 

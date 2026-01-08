@@ -1428,17 +1428,37 @@ app.get('/api/resumes/:id/download', authenticateToken, async (req, res) => {
     }
 
     // Check if file exists
-    if (!fs.existsSync || !fs.existsSync(resume.filePath)) {
+    let fileExists = false;
+    try {
+      fileExists = fs.existsSync && fs.existsSync(resume.filePath);
+    } catch (err) {
+      console.error('Error checking file existence:', err);
+    }
+
+    if (!fileExists) {
+      console.error('File not found at path:', resume.filePath);
       return res.status(404).json({ error: 'Resume file not found on server' });
     }
 
-    // Set headers for file download
+    // Set headers for file download/viewing
     res.setHeader('Content-Type', resume.type);
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resume.originalName)}"`);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(resume.originalName)}"`);
+    res.setHeader('Cache-Control', 'no-cache');
     
     // Stream the file
-    const fileStream = fs.createReadStream(resume.filePath);
-    fileStream.pipe(res);
+    try {
+      const fileStream = fs.createReadStream(resume.filePath);
+      fileStream.on('error', (err) => {
+        console.error('Error streaming file:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to read resume file' });
+        }
+      });
+      fileStream.pipe(res);
+    } catch (err) {
+      console.error('Error creating file stream:', err);
+      res.status(500).json({ error: 'Failed to download resume' });
+    }
   } catch (error) {
     console.error('Error downloading resume:', error);
     res.status(500).json({ error: 'Failed to download resume' });

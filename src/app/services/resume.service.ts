@@ -87,13 +87,19 @@ export class ResumeService {
       return;
     }
 
-    // Use API URL if available, otherwise download and open
-    if (resume.url) {
-      window.open(resume.url, '_blank');
-    } else {
-      const url = this.apiService.getResumeUrl(resumeId);
-      window.open(url, '_blank');
-    }
+    // Download the file first (with auth), then open it
+    this.apiService.downloadResume(resumeId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        // Clean up after a delay to allow the browser to load the file
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: (err) => {
+        console.error('Error opening resume:', err);
+        alert('Failed to open resume. Please try again.');
+      }
+    });
   }
 
   /**
