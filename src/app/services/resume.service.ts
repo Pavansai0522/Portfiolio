@@ -87,32 +87,32 @@ export class ResumeService {
       return;
     }
 
-    // Fetch the file and open it in a new window for viewing
-    // The API returns with inline disposition for viewing
+    // Get the API URL for opening (without download parameter)
+    const apiUrl = this.apiService.getResumeUrl(resumeId);
+    
+    // Get auth token to include in URL or use iframe with proper headers
+    // For now, fetch the blob and create a data URL or use iframe approach
     this.apiService.openResume(resumeId).subscribe({
       next: (blob) => {
-        // Create object URL from blob
-        const blobUrl = URL.createObjectURL(blob);
-        
-        // Open in new window - browser will handle display based on file type
-        // PDFs will display inline, Word docs may open in viewer or prompt
-        const newWindow = window.open(blobUrl, '_blank');
-        
-        if (!newWindow) {
-          alert('Please allow popups to view the resume');
-          URL.revokeObjectURL(blobUrl);
-          return;
-        }
-        
-        // Clean up blob URL after window loads
-        // Use longer delay to ensure file is loaded before cleanup
-        setTimeout(() => {
-          try {
-            URL.revokeObjectURL(blobUrl);
-          } catch (e) {
-            console.warn('Error revoking blob URL:', e);
+        // Convert blob to data URL for better browser compatibility
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          
+          // Open in new window with data URL
+          // This ensures the browser displays it inline based on Content-Type
+          const newWindow = window.open(dataUrl, '_blank');
+          
+          if (!newWindow) {
+            alert('Please allow popups to view the resume');
+            return;
           }
-        }, 10000); // 10 seconds should be enough for most files
+        };
+        reader.onerror = () => {
+          console.error('Error reading blob');
+          alert('Failed to open resume. Please try again.');
+        };
+        reader.readAsDataURL(blob);
       },
       error: (err) => {
         console.error('Error opening resume:', err);
