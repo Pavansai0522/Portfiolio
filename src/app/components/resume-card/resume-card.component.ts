@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject, signal, ElementRef, ViewChild, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, ElementRef, ViewChild, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ResumeService, ResumeFile } from '../../services/resume.service';
 import { AuthService } from '../../services/auth.service';
+import { ResumeGeneratorService, Template } from '../../services/resume-generator.service';
 
 @Component({
   selector: 'app-resume-card',
@@ -12,9 +13,11 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './resume-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ResumeCardComponent {
+export class ResumeCardComponent implements OnInit {
   private readonly resumeService = inject(ResumeService);
   private readonly authService = inject(AuthService);
+  private readonly resumeGeneratorService = inject(ResumeGeneratorService);
+  private readonly router = inject(Router);
   
   protected readonly isAuthenticated = this.authService.isAuthenticated;
 
@@ -23,8 +26,95 @@ export class ResumeCardComponent {
   protected readonly hasMoreResumes = computed(() => this.resumes().length > 6);
   protected readonly isUploading = signal(false);
   protected readonly uploadError = signal<string | null>(null);
+  
+  // Template selection
+  protected readonly templates = signal<Template[]>([]);
+  protected readonly selectedTemplate = signal<string>('classic');
+  protected readonly showTemplateSection = signal(true); // Show by default
+  protected readonly isGenerating = signal(false);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  
+  ngOnInit() {
+    this.loadTemplates();
+  }
+  
+  loadTemplates() {
+    this.resumeGeneratorService.getTemplates().subscribe({
+      next: (response) => {
+        if (response.success && response.templates) {
+          this.templates.set(response.templates);
+          if (response.templates.length > 0) {
+            this.selectedTemplate.set(response.templates[0].id);
+          }
+        } else {
+          // Fallback templates if API doesn't return them
+          this.templates.set([
+            { id: 'classic', name: 'Classic' },
+            { id: 'modern', name: 'Modern' },
+            { id: 'minimal', name: 'Minimal' },
+            { id: 'executive', name: 'Executive' },
+            { id: 'creative', name: 'Creative' }
+          ]);
+          this.selectedTemplate.set('classic');
+        }
+      },
+      error: (err) => {
+        console.error('Error loading templates:', err);
+        // Fallback templates on error
+        this.templates.set([
+          { id: 'classic', name: 'Classic' },
+          { id: 'modern', name: 'Modern' },
+          { id: 'minimal', name: 'Minimal' },
+          { id: 'executive', name: 'Executive' },
+          { id: 'creative', name: 'Creative' }
+        ]);
+        this.selectedTemplate.set('classic');
+      }
+    });
+  }
+  
+  toggleTemplateSection() {
+    this.showTemplateSection.set(!this.showTemplateSection());
+  }
+  
+  selectTemplate(templateId: string) {
+    this.selectedTemplate.set(templateId);
+  }
+  
+  generateResumeFromTemplate() {
+    this.isGenerating.set(true);
+    // Navigate to resume generator with selected template
+    this.router.navigate(['/resume-generator'], {
+      queryParams: { template: this.selectedTemplate() }
+    }).then(() => {
+      this.isGenerating.set(false);
+    }).catch(() => {
+      this.isGenerating.set(false);
+    });
+  }
+  
+  getTemplatePreview(templateId: string): string {
+    const previews: { [key: string]: string } = {
+      'classic': 'Traditional format with centered header',
+      'modern': 'Two-column layout with sidebar',
+      'minimal': 'Clean and simple design',
+      'executive': 'Professional with bold borders',
+      'creative': 'Colorful gradient design'
+    };
+    return previews[templateId] || 'Professional resume template';
+  }
+  
+  getTemplateColor(templateId: string): string {
+    const colors: { [key: string]: string } = {
+      'classic': '#1a1a1a',
+      'modern': '#2c3e50',
+      'minimal': '#888',
+      'executive': '#1a1a1a',
+      'creative': '#667eea'
+    };
+    return colors[templateId] || '#667eea';
+  }
 
   protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;

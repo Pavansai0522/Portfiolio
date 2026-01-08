@@ -1520,6 +1520,120 @@ app.delete('/api/resumes/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== Resume Generator Routes ====================
+
+// POST /api/resume - Generate resume as PDF or DOCX
+app.post('/api/resume', async (req, res) => {
+  try {
+    const { name, email, phone, skills, experience, education, templateId, format } = req.body;
+
+    // Validation
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    if (!templateId || !['classic', 'modern', 'minimal', 'executive', 'creative'].includes(templateId)) {
+      return res.status(400).json({ error: 'Valid templateId (classic, modern, minimal, executive, or creative) is required' });
+    }
+
+    if (!format || !['pdf', 'docx'].includes(format)) {
+      return res.status(400).json({ error: 'Valid format (pdf or docx) is required' });
+    }
+
+    // Prepare resume data
+    const resumeData = {
+      name: name || '',
+      email: email || '',
+      phone: phone || '',
+      skills: Array.isArray(skills) ? skills : (skills ? [skills] : []),
+      experience: Array.isArray(experience) ? experience : [],
+      education: Array.isArray(education) ? education : []
+    };
+
+    // Load template utility
+    const { renderResume } = require('./utils/resumeTemplates');
+    
+    // Render HTML from template
+    const htmlContent = renderResume(templateId, resumeData);
+
+    if (format === 'pdf') {
+      // Generate PDF using Puppeteer
+      const puppeteer = require('puppeteer');
+      
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      try {
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '0.5in',
+            right: '0.5in',
+            bottom: '0.5in',
+            left: '0.5in'
+          }
+        });
+        
+        await browser.close();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="resume-${Date.now()}.pdf"`);
+        res.send(pdfBuffer);
+      } catch (pdfError) {
+        await browser.close();
+        throw pdfError;
+      }
+    } else if (format === 'docx') {
+      // Generate DOCX using docxtemplater
+      const Docxtemplater = require('docxtemplater');
+      const PizZip = require('pizzip');
+      
+      // Create a simple DOCX structure programmatically
+      // For a production app, you'd have a .docx template file
+      // Here we'll create a simple DOCX from HTML content
+      const { createDocxFromHtml } = require('./utils/docxGenerator');
+      const docxBuffer = await createDocxFromHtml(htmlContent, resumeData);
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename="resume-${Date.now()}.docx"`);
+      res.send(docxBuffer);
+    }
+  } catch (error) {
+    console.error('Error generating resume:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate resume',
+      details: error.message 
+    });
+  }
+});
+
+// GET /api/resume/templates - Get available templates
+app.get('/api/resume/templates', (req, res) => {
+  try {
+    const { getAvailableTemplates } = require('./utils/resumeTemplates');
+    const templates = getAvailableTemplates();
+    res.json({ 
+      success: true,
+      templates: templates.map(id => ({
+        id,
+        name: id.charAt(0).toUpperCase() + id.slice(1)
+      }))
+    });
+  } catch (error) {
+    console.error('Error getting templates:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to get templates' 
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   try {

@@ -6,6 +6,80 @@
         <h3 class="resume-card-title">Resume Manager</h3>
       </div>
 
+      <!-- Template Selection Section -->
+      <div class="resume-template-section">
+        <div class="template-section-header">
+          <h4 class="template-section-title">Resume Templates</h4>
+          <button
+            (click)="toggleTemplateSection()"
+            class="template-toggle-icon"
+            [attr.aria-expanded]="showTemplateSection()"
+          >
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="showTemplateSection()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+        </div>
+        
+        @if (showTemplateSection()) {
+          <div class="template-selection-panel">
+            @if (templates().length === 0) {
+              <div class="template-loading">
+                <p>Loading templates...</p>
+              </div>
+            } @else {
+              <p class="template-selection-title">Choose a Template</p>
+              <div class="template-grid">
+                @for (template of templates(); track template.id) {
+                  <div
+                    class="template-card"
+                    [class.template-card-selected]="selectedTemplate() === template.id"
+                    (click)="selectTemplate(template.id)"
+                    [style.border-color]="selectedTemplate() === template.id ? getTemplateColor(template.id) : ''"
+                  >
+                    <div class="template-preview" [style.background]="getTemplateColor(template.id) + '20'">
+                      <div class="template-preview-box" [style.border-color]="getTemplateColor(template.id)">
+                        <div class="template-preview-header" [style.background]="getTemplateColor(template.id)"></div>
+                        <div class="template-preview-content">
+                          <div class="template-preview-line"></div>
+                          <div class="template-preview-line short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="template-info">
+                      <p class="template-name">{{ template.name }}</p>
+                      <p class="template-description">{{ getTemplatePreview(template.id) }}</p>
+                    </div>
+                    @if (selectedTemplate() === template.id) {
+                      <div class="template-check">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <button
+                (click)="generateResumeFromTemplate()"
+                [disabled]="isGenerating()"
+                class="template-generate-btn"
+              >
+                @if (isGenerating()) {
+                  <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Opening...</span>
+                } @else {
+                  <span>Create Resume with {{ templates().find(t => t.id === selectedTemplate())?.name }} Template</span>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+
       <!-- Upload Section -->
       <div class="resume-upload-section">
         <input

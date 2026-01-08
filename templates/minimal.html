@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume - {{name}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            font-size: 10pt;
+            line-height: 1.8;
+            color: #2c2c2c;
+            background: #fff;
+            padding: 0.6in;
+        }
+        .resume-container {
+            max-width: 8.5in;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: left;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .name {
+            font-size: 32pt;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+        }
+        .contact-info {
+            font-size: 9pt;
+            color: #666;
+            display: flex;
+            gap: 20px;
+        }
+        .contact-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section-title {
+            font-size: 11pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .experience-item, .education-item {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .experience-item:last-child, .education-item:last-child {
+            border-bottom: none;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .item-left {
+            flex: 1;
+        }
+        .item-title {
+            font-weight: 600;
+            font-size: 11pt;
+            color: #1a1a1a;
+            margin-bottom: 3px;
+        }
+        .item-company, .item-institution {
+            font-size: 10pt;
+            color: #666;
+            font-weight: 400;
+        }
+        .item-date {
+            font-size: 9pt;
+            color: #999;
+            white-space: nowrap;
+            margin-left: 20px;
+        }
+        .item-description {
+            margin-top: 10px;
+            color: #555;
+            font-size: 9.5pt;
+            line-height: 1.6;
+        }
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .skill-item {
+            padding: 4px 12px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            font-size: 9pt;
+            color: #555;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        <div class="header">
+            <div class="name">{{name}}</div>
+            <div class="contact-info">
+                <span>{{email}}</span>
+                <span>{{phone}}</span>
+            </div>
+        </div>
+
+        {{#if experience.length}}
+        <div class="section">
+            <div class="section-title">Experience</div>
+            {{#each experience}}
+            <div class="experience-item">
+                <div class="item-header">
+                    <div class="item-left">
+                        <div class="item-title">{{position}}</div>
+                        <div class="item-company">{{company}}</div>
+                    </div>
+                    <div class="item-date">{{startDate}} - {{#if endDate}}{{endDate}}{{else}}Present{{/if}}</div>
+                </div>
+                {{#if description}}
+                <div class="item-description">{{description}}</div>
+                {{/if}}
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        {{#if education.length}}
+        <div class="section">
+            <div class="section-title">Education</div>
+            {{#each education}}
+            <div class="education-item">
+                <div class="item-header">
+                    <div class="item-left">
+                        <div class="item-title">{{degree}}</div>
+                        <div class="item-institution">{{institution}}</div>
+                    </div>
+                    <div class="item-date">{{startDate}} - {{#if endDate}}{{endDate}}{{else}}Present{{/if}}</div>
+                </div>
+                {{#if field}}
+                <div class="item-description">Field: {{field}}</div>
+                {{/if}}
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        {{#if skills.length}}
+        <div class="section">
+            <div class="section-title">Skills</div>
+            <div class="skills-list">
+                {{#each skills}}
+                <div class="skill-item">{{this}}</div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+    </div>
+</body>
+</html>
+

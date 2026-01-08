@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume - {{name}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+            padding: 0.4in;
+        }
+        .resume-container {
+            max-width: 8.5in;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+        .sidebar {
+            background: #2c3e50;
+            color: #fff;
+            padding: 30px 20px;
+            border-radius: 5px;
+        }
+        .main-content {
+            padding: 0 10px;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .name {
+            font-size: 28pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .contact-info {
+            font-size: 9pt;
+            color: #666;
+        }
+        .contact-info div {
+            margin: 5px 0;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 3px solid #3498db;
+        }
+        .sidebar .section-title {
+            color: #fff;
+            border-bottom: 3px solid #3498db;
+        }
+        .experience-item, .education-item {
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 3px solid #ecf0f1;
+        }
+        .item-header {
+            margin-bottom: 8px;
+        }
+        .item-title {
+            font-weight: bold;
+            font-size: 12pt;
+            color: #2c3e50;
+        }
+        .item-company, .item-institution {
+            font-weight: 600;
+            font-size: 11pt;
+            color: #3498db;
+            margin-top: 3px;
+        }
+        .item-date {
+            font-size: 9pt;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 3px;
+        }
+        .item-description {
+            margin-top: 8px;
+            color: #555;
+            text-align: justify;
+        }
+        .skills-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .skill-item {
+            background: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 9pt;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .sidebar .skill-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        ul {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+        li {
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .contact-item {
+            margin: 10px 0;
+            font-size: 9pt;
+        }
+        .contact-item strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        <div class="sidebar">
+            <div class="section">
+                <div class="section-title">Contact</div>
+                <div class="contact-item">
+                    <strong>Email</strong>
+                    {{email}}
+                </div>
+                <div class="contact-item">
+                    <strong>Phone</strong>
+                    {{phone}}
+                </div>
+            </div>
+
+            {{#if skills.length}}
+            <div class="section">
+                <div class="section-title">Skills</div>
+                <div class="skills-list">
+                    {{#each skills}}
+                    <div class="skill-item">{{this}}</div>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div class="name">{{name}}</div>
+            </div>
+
+            {{#if experience.length}}
+            <div class="section">
+                <div class="section-title">Experience</div>
+                {{#each experience}}
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">{{position}}</div>
+                        <div class="item-company">{{company}}</div>
+                        <div class="item-date">{{startDate}} - {{#if endDate}}{{endDate}}{{else}}Present{{/if}}</div>
+                    </div>
+                    {{#if description}}
+                    <div class="item-description">{{description}}</div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if education.length}}
+            <div class="section">
+                <div class="section-title">Education</div>
+                {{#each education}}
+                <div class="education-item">
+                    <div class="item-header">
+                        <div class="item-title">{{degree}}</div>
+                        <div class="item-institution">{{institution}}</div>
+                        <div class="item-date">{{startDate}} - {{#if endDate}}{{endDate}}{{else}}Present{{/if}}</div>
+                    </div>
+                    {{#if field}}
+                    <div class="item-description">Field: {{field}}</div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</body>
+</html>
+
+

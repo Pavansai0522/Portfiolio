@@ -8,6 +8,7 @@ import { PortfolioComponent } from './components/portfolio/portfolio.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { JobsComponent } from './components/jobs/jobs.component';
 import { SettingsComponent } from './components/settings/settings.component';
+import { ResumeGeneratorComponent } from './components/resume-generator/resume-generator.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -60,6 +61,11 @@ export const routes: Routes = [
     component: SettingsComponent,
     title: 'Settings',
     canActivate: [authGuard]
+  },
+  {
+    path: 'resume-generator',
+    component: ResumeGeneratorComponent,
+    title: 'Resume Generator'
   },
   {
     path: '**',

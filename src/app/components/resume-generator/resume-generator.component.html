@@ -1,0 +1,265 @@
+<div class="resume-generator-container">
+  <div class="header">
+    <h1>Resume Generator</h1>
+    <p>Create a professional resume in minutes</p>
+  </div>
+
+  <div class="content-grid">
+    <!-- Form Section -->
+    <div class="form-section">
+      <div class="form-card">
+        <h2>Resume Information</h2>
+        
+        <div class="form-group">
+          <label for="name">Full Name *</label>
+          <input 
+            type="text" 
+            id="name" 
+            [(ngModel)]="name" 
+            (ngModelChange)="updatePreview()"
+            placeholder="John Doe"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input 
+            type="email" 
+            id="email" 
+            [(ngModel)]="email" 
+            (ngModelChange)="updatePreview()"
+            placeholder="john.doe@example.com"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            [(ngModel)]="phone" 
+            (ngModelChange)="updatePreview()"
+            placeholder="+1 (555) 123-4567"
+            class="form-input"
+          />
+        </div>
+
+        <!-- Skills -->
+        <div class="form-group">
+          <label>Skills</label>
+          <div class="skill-input-group">
+            <input 
+              type="text" 
+              [(ngModel)]="skillInput" 
+              (keyup.enter)="addSkill()"
+              placeholder="Enter a skill and press Enter"
+              class="form-input"
+            />
+            <button type="button" (click)="addSkill()" class="btn-add">Add</button>
+          </div>
+          <div class="skills-list" *ngIf="skills().length > 0">
+            <span *ngFor="let skill of skills()" class="skill-tag">
+              {{ skill }}
+              <button type="button" (click)="removeSkill(skill)" class="skill-remove">×</button>
+            </span>
+          </div>
+        </div>
+
+        <!-- Experience -->
+        <div class="form-group">
+          <label>Experience</label>
+          <button 
+            type="button" 
+            (click)="showExperienceForm.set(!showExperienceForm())" 
+            class="btn-secondary"
+          >
+            {{ showExperienceForm() ? 'Cancel' : 'Add Experience' }}
+          </button>
+
+          <div *ngIf="showExperienceForm()" class="nested-form">
+            <input 
+              type="text" 
+              [(ngModel)]="newExperience.position" 
+              placeholder="Position"
+              class="form-input"
+            />
+            <input 
+              type="text" 
+              [(ngModel)]="newExperience.company" 
+              placeholder="Company"
+              class="form-input"
+            />
+            <textarea 
+              [(ngModel)]="newExperience.description" 
+              placeholder="Description"
+              class="form-textarea"
+              rows="3"
+            ></textarea>
+            <div class="form-row">
+              <input 
+                type="text" 
+                [(ngModel)]="newExperience.startDate" 
+                placeholder="Start Date (e.g., Jan 2020)"
+                class="form-input"
+              />
+              <input 
+                type="text" 
+                [(ngModel)]="newExperience.endDate" 
+                placeholder="End Date (leave empty if current)"
+                class="form-input"
+                [disabled]="newExperience.isCurrent ?? false"
+              />
+            </div>
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="newExperience.isCurrent"
+              />
+              Current Position
+            </label>
+            <button type="button" (click)="addExperience()" class="btn-primary">Add Experience</button>
+          </div>
+
+          <div *ngIf="experience().length > 0" class="items-list">
+            <div *ngFor="let exp of experience(); let i = index" class="item-card">
+              <div class="item-header">
+                <strong>{{ exp.position }} at {{ exp.company }}</strong>
+                <button type="button" (click)="removeExperience(i)" class="btn-remove">Remove</button>
+              </div>
+              <div class="item-meta">{{ exp.startDate }} - {{ exp.endDate || 'Present' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Education -->
+        <div class="form-group">
+          <label>Education</label>
+          <button 
+            type="button" 
+            (click)="showEducationForm.set(!showEducationForm())" 
+            class="btn-secondary"
+          >
+            {{ showEducationForm() ? 'Cancel' : 'Add Education' }}
+          </button>
+
+          <div *ngIf="showEducationForm()" class="nested-form">
+            <input 
+              type="text" 
+              [(ngModel)]="newEducation.degree" 
+              placeholder="Degree (e.g., Bachelor of Science)"
+              class="form-input"
+            />
+            <input 
+              type="text" 
+              [(ngModel)]="newEducation.institution" 
+              placeholder="Institution"
+              class="form-input"
+            />
+            <input 
+              type="text" 
+              [(ngModel)]="newEducation.field" 
+              placeholder="Field of Study (optional)"
+              class="form-input"
+            />
+            <div class="form-row">
+              <input 
+                type="text" 
+                [(ngModel)]="newEducation.startDate" 
+                placeholder="Start Date"
+                class="form-input"
+              />
+              <input 
+                type="text" 
+                [(ngModel)]="newEducation.endDate" 
+                placeholder="End Date (leave empty if current)"
+                class="form-input"
+                [disabled]="newEducation.isCurrent ?? false"
+              />
+            </div>
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="newEducation.isCurrent"
+              />
+              Currently Enrolled
+            </label>
+            <button type="button" (click)="addEducation()" class="btn-primary">Add Education</button>
+          </div>
+
+          <div *ngIf="education().length > 0" class="items-list">
+            <div *ngFor="let edu of education(); let i = index" class="item-card">
+              <div class="item-header">
+                <strong>{{ edu.degree }} from {{ edu.institution }}</strong>
+                <button type="button" (click)="removeEducation(i)" class="btn-remove">Remove</button>
+              </div>
+              <div class="item-meta">{{ edu.startDate }} - {{ edu.endDate || 'Present' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Selection -->
+        <div class="form-group">
+          <label>Template</label>
+          <select 
+            [(ngModel)]="selectedTemplate" 
+            (ngModelChange)="onTemplateChange()"
+            class="form-select"
+          >
+            <option *ngFor="let template of templates()" [value]="template.id">
+              {{ template.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Format Selection -->
+        <div class="form-group">
+          <label>Export Format</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input 
+                type="radio" 
+                [(ngModel)]="selectedFormat" 
+                value="pdf"
+              />
+              PDF
+            </label>
+            <label class="radio-label">
+              <input 
+                type="radio" 
+                [(ngModel)]="selectedFormat" 
+                value="docx"
+              />
+              DOCX
+            </label>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button 
+          type="button" 
+          (click)="generateResume()" 
+          class="btn-generate"
+          [disabled]="isLoading() || !name() || !email()"
+        >
+          {{ isLoading() ? 'Generating...' : 'Generate Resume' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-section">
+      <div class="preview-card">
+        <h2>Live Preview</h2>
+        <div class="preview-container" *ngIf="previewHtml()">
+          <div [innerHTML]="previewHtml()"></div>
+        </div>
+        <div *ngIf="!previewHtml()" class="preview-placeholder">
+          Fill in the form to see a live preview of your resume
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
