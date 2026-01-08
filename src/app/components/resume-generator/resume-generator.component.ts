@@ -1,8 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ResumeGeneratorService, ResumeData, ExperienceItem, EducationItem, Template } from '../../services/resume-generator.service';
+import { PortfolioDataService, Experience, Education } from '../../services/portfolio-data.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
@@ -53,6 +54,9 @@ export class ResumeGeneratorComponent implements OnInit {
   
   showExperienceForm = signal(false);
   showEducationForm = signal(false);
+  
+  private readonly portfolioService = inject(PortfolioDataService);
+  protected readonly dataLoaded = signal(false);
 
   constructor(
     private resumeService: ResumeGeneratorService,
@@ -70,7 +74,107 @@ export class ResumeGeneratorComponent implements OnInit {
       }
     });
     
+    // Try to load portfolio data immediately
+    this.loadPortfolioData();
+    
+    // Also check after a short delay in case portfolio data is still loading
+    setTimeout(() => {
+      if (!this.dataLoaded()) {
+        this.loadPortfolioData();
+      }
+    }, 500);
+    
     this.updatePreview();
+  }
+  
+  loadPortfolioData() {
+    const portfolio = this.portfolioService.getPortfolioData();
+    if (portfolio && (portfolio.name || portfolio.email)) {
+      this.mapPortfolioToResume(portfolio);
+    }
+  }
+  
+  mapPortfolioToResume(portfolio: { name?: string; email?: string; phone?: string; skills?: string[]; experience?: Experience[]; education?: Education[] }) {
+    if (!portfolio) return;
+    
+    // Only map if we have at least name or email
+    if (!portfolio.name && !portfolio.email) return;
+    
+    // Map portfolio data to resume form (only if not already set or if portfolio has data)
+    if (portfolio.name && (!this.name() || this.name() === '')) {
+      this.name.set(portfolio.name);
+    }
+    if (portfolio.email && (!this.email() || this.email() === '')) {
+      this.email.set(portfolio.email);
+    }
+    if (portfolio.phone && (!this.phone() || this.phone() === '')) {
+      this.phone.set(portfolio.phone);
+    }
+    if (portfolio.skills && portfolio.skills.length > 0 && this.skills().length === 0) {
+      this.skills.set([...portfolio.skills]);
+    }
+    
+    // Map experience from portfolio to resume format (only if empty)
+    if (portfolio.experience && portfolio.experience.length > 0 && this.experience().length === 0) {
+      const mappedExperience: ExperienceItem[] = portfolio.experience.map((exp: Experience) => ({
+        position: exp.position || '',
+        company: exp.company || '',
+        description: exp.description || '',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || '',
+        isCurrent: exp.isCurrent || false
+      }));
+      this.experience.set(mappedExperience);
+    }
+    
+    // Map education from portfolio to resume format (only if empty)
+    if (portfolio.education && portfolio.education.length > 0 && this.education().length === 0) {
+      const mappedEducation: EducationItem[] = portfolio.education.map((edu: Education) => ({
+        degree: edu.degree || '',
+        institution: edu.institution || '',
+        field: edu.field || '',
+        description: edu.description || '',
+        startDate: edu.startDate || '',
+        endDate: edu.endDate || '',
+        isCurrent: edu.isCurrent || false
+      }));
+      this.education.set(mappedEducation);
+    }
+    
+    // Only mark as loaded if we actually mapped some data
+    if (portfolio.name || portfolio.email || (portfolio.skills && portfolio.skills.length > 0) || 
+        (portfolio.experience && portfolio.experience.length > 0) || 
+        (portfolio.education && portfolio.education.length > 0)) {
+      this.dataLoaded.set(true);
+    }
+    
+    this.updatePreview();
+  }
+  
+  loadFromPortfolio() {
+    // Reset the loaded flag to allow reloading
+    this.dataLoaded.set(false);
+    
+    // Reload portfolio data to ensure we have the latest
+    this.portfolioService.reloadPortfolioData();
+    
+    // Wait a bit for data to load, then map it
+    setTimeout(() => {
+      const portfolio = this.portfolioService.getPortfolioData();
+      if (portfolio) {
+        // Force reload by clearing existing data first
+        this.name.set('');
+        this.email.set('');
+        this.phone.set('');
+        this.skills.set([]);
+        this.experience.set([]);
+        this.education.set([]);
+        this.dataLoaded.set(false);
+        
+        // Then map the portfolio data
+        this.mapPortfolioToResume(portfolio);
+      }
+    }, 500);
   }
 
   loadTemplates() {

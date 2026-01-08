@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { TechNewsComponent } from '../tech-news/tech-news.component';
 import { AppliedJobsService } from '../../services/applied-jobs.service';
 import { ResumeGeneratorService, Template } from '../../services/resume-generator.service';
@@ -15,6 +15,7 @@ import { ResumeGeneratorService, Template } from '../../services/resume-generato
 export class DashboardComponent implements OnInit {
   protected readonly appliedJobsService = inject(AppliedJobsService);
   private readonly resumeGeneratorService = inject(ResumeGeneratorService);
+  private readonly router = inject(Router);
   
   protected readonly templates = signal<Template[]>([]);
   protected readonly selectedTemplate = signal<string>('classic');
@@ -61,7 +62,9 @@ export class DashboardComponent implements OnInit {
   }
   
   navigateToGenerator(templateId: string) {
-    window.location.href = `/resume-generator?template=${templateId}`;
+    this.router.navigate(['/resume-generator'], {
+      queryParams: { template: templateId }
+    });
   }
   
   getTemplatePreview(templateId: string): string {
