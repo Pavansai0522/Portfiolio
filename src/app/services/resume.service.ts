@@ -87,32 +87,79 @@ export class ResumeService {
       return;
     }
 
-    // Get the API URL for opening (without download parameter)
-    const apiUrl = this.apiService.getResumeUrl(resumeId);
-    
-    // Get auth token to include in URL or use iframe with proper headers
-    // For now, fetch the blob and create a data URL or use iframe approach
+    // Fetch the blob and create a blob URL with proper MIME type
+    // Then open it in a new window - browser will display based on MIME type
     this.apiService.openResume(resumeId).subscribe({
       next: (blob) => {
-        // Convert blob to data URL for better browser compatibility
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          
-          // Open in new window with data URL
-          // This ensures the browser displays it inline based on Content-Type
-          const newWindow = window.open(dataUrl, '_blank');
-          
+        // Create a new blob with explicit type to ensure browser recognizes it
+        const typedBlob = new Blob([blob], { type: resume.type });
+        const blobUrl = URL.createObjectURL(typedBlob);
+        
+        // For PDFs, create an iframe in a new window for better display
+        if (resume.type === 'application/pdf') {
+          // Open new window and write HTML with embedded PDF
+          const newWindow = window.open('', '_blank');
           if (!newWindow) {
             alert('Please allow popups to view the resume');
+            URL.revokeObjectURL(blobUrl);
             return;
           }
-        };
-        reader.onerror = () => {
-          console.error('Error reading blob');
-          alert('Failed to open resume. Please try again.');
-        };
-        reader.readAsDataURL(blob);
+          
+          newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>${resume.name}</title>
+                <style>
+                  body { margin: 0; padding: 0; overflow: hidden; }
+                  iframe { width: 100%; height: 100vh; border: none; }
+                </style>
+              </head>
+              <body>
+                <iframe src="${blobUrl}" type="${resume.type}"></iframe>
+              </body>
+            </html>
+          `);
+          newWindow.document.close();
+          
+          // Clean up after window closes or after delay
+          newWindow.addEventListener('beforeunload', () => {
+            URL.revokeObjectURL(blobUrl);
+          });
+          setTimeout(() => {
+            // Cleanup after 30 seconds if window is still open
+            try {
+              if (!newWindow.closed) {
+                // Don't revoke if window is still open and being used
+              }
+            } catch (e) {
+              URL.revokeObjectURL(blobUrl);
+            }
+          }, 30000);
+        } else {
+          // For other file types (Word docs), open blob URL directly
+          // Browser will handle based on MIME type
+          const newWindow = window.open(blobUrl, '_blank');
+          if (!newWindow) {
+            alert('Please allow popups to view the resume');
+            URL.revokeObjectURL(blobUrl);
+            return;
+          }
+          
+          // Clean up after window closes
+          newWindow.addEventListener('beforeunload', () => {
+            URL.revokeObjectURL(blobUrl);
+          });
+          setTimeout(() => {
+            try {
+              if (newWindow.closed) {
+                URL.revokeObjectURL(blobUrl);
+              }
+            } catch (e) {
+              URL.revokeObjectURL(blobUrl);
+            }
+          }, 10000);
+        }
       },
       error: (err) => {
         console.error('Error opening resume:', err);
