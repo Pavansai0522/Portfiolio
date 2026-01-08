@@ -1,8 +1,7 @@
 // Vercel Serverless Function for /api/resumes and all nested routes
-// Using [[...path]] (optional catch-all) to handle both base route and nested routes
 // This handles /api/resumes, /api/resumes/upload, /api/resumes/:id, /api/resumes/:id/download
-const app = require('../../server');
-const connectDB = require('../../config/database');
+const app = require('../server');
+const connectDB = require('../config/database');
 const mongoose = require('mongoose');
 
 let connectionPromise = null;
@@ -17,30 +16,22 @@ module.exports = async (req, res) => {
     console.log('Query:', JSON.stringify(req.query, null, 2));
     
     // Reconstruct the full path from query or URL
-    // Vercel's [[...path]] optional catch-all passes segments in req.query.path
-    // For base route /api/resumes, query.path might be empty or undefined
+    // Similar to portfolio.js pattern
     let fullPath = '/api/resumes';
     
-    // First, try to get path from URL (most reliable)
-    if (req.url) {
+    if (req.query && req.query.path) {
+      const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
+      const validSegments = pathSegments.filter(s => s && s.trim() !== '');
+      if (validSegments.length > 0) {
+        fullPath = '/api/' + validSegments.join('/');
+        console.log('Reconstructed path from query.path:', fullPath);
+      }
+    } else if (req.url && req.url.startsWith('/api/resumes')) {
       const urlPath = req.url.split('?')[0];
-      if (urlPath === '/api/resumes' || urlPath.startsWith('/api/resumes/')) {
+      if (urlPath.startsWith('/api/resumes')) {
         fullPath = urlPath;
         console.log('Using path from URL:', fullPath);
       }
-    }
-    
-    // If URL didn't give us a path, try query.path (Vercel catch-all routing)
-    if (fullPath === '/api/resumes' && req.query && req.query.path !== undefined) {
-      const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
-      const validSegments = pathSegments.filter(s => s && s !== null && s !== undefined && s.toString().trim() !== '');
-      if (validSegments.length > 0) {
-        // Join segments and ensure it starts with /api/resumes
-        const joinedPath = validSegments.join('/');
-        fullPath = '/api/resumes/' + joinedPath;
-        console.log('Reconstructed path from query.path:', fullPath);
-      }
-      // If validSegments is empty, we're at /api/resumes (root) - keep fullPath as is
     }
     
     // Extract dynamic route parameters (e.g., /api/resumes/:id or /api/resumes/:id/download)
