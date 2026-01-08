@@ -87,36 +87,32 @@ export class ResumeService {
       return;
     }
 
-    // For PDFs and documents, create blob URL and open in new window
+    // Fetch the file and open it in a new window for viewing
     // The API returns with inline disposition for viewing
     this.apiService.openResume(resumeId).subscribe({
       next: (blob) => {
         // Create object URL from blob
         const blobUrl = URL.createObjectURL(blob);
         
-        // For PDFs, open in new window - browser will display inline
-        if (resume.type === 'application/pdf') {
-          const newWindow = window.open(blobUrl, '_blank');
-          if (!newWindow) {
-            alert('Please allow popups to view the resume');
-            URL.revokeObjectURL(blobUrl);
-            return;
-          }
-          // Clean up after window loads (longer delay for PDFs)
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-        } else {
-          // For Word documents, create download link but try to open
-          // Most browsers will prompt to open with default app
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          // Clean up after a delay
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        // Open in new window - browser will handle display based on file type
+        // PDFs will display inline, Word docs may open in viewer or prompt
+        const newWindow = window.open(blobUrl, '_blank');
+        
+        if (!newWindow) {
+          alert('Please allow popups to view the resume');
+          URL.revokeObjectURL(blobUrl);
+          return;
         }
+        
+        // Clean up blob URL after window loads
+        // Use longer delay to ensure file is loaded before cleanup
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) {
+            console.warn('Error revoking blob URL:', e);
+          }
+        }, 10000); // 10 seconds should be enough for most files
       },
       error: (err) => {
         console.error('Error opening resume:', err);
