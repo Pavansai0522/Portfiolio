@@ -1,7 +1,7 @@
 // Vercel Serverless Function for /api/resumes and all nested routes
 // This handles /api/resumes, /api/resumes/upload, /api/resumes/:id, /api/resumes/:id/download
-const app = require('../server');
-const connectDB = require('../config/database');
+const app = require('../../server');
+const connectDB = require('../../config/database');
 const mongoose = require('mongoose');
 
 let connectionPromise = null;
@@ -15,17 +15,6 @@ module.exports = async (req, res) => {
     console.log('Original URL:', req.originalUrl);
     console.log('Query:', JSON.stringify(req.query, null, 2));
     
-    // Early return if this is not a resume route
-    const urlPath = req.url ? req.url.split('?')[0] : '';
-    if (!urlPath.startsWith('/api/resumes') && 
-        (!req.query || !req.query.path || !req.query.path.toString().startsWith('resumes'))) {
-      console.log('Not a resume route, skipping...');
-      return res.status(404).json({ 
-        error: 'Not found',
-        message: 'This endpoint only handles /api/resumes routes'
-      });
-    }
-    
     // Reconstruct the full path from query or URL
     let fullPath = '/api/resumes';
     
@@ -33,20 +22,15 @@ module.exports = async (req, res) => {
       const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
       const validSegments = pathSegments.filter(s => s && s.trim() !== '');
       if (validSegments.length > 0) {
-        const joinedPath = validSegments.join('/');
-        // Only process if it starts with 'resumes'
-        if (joinedPath.startsWith('resumes')) {
-          fullPath = '/api/' + joinedPath;
-          console.log('Reconstructed path from query.path:', fullPath);
-        } else {
-          return res.status(404).json({ error: 'Not a resume route' });
-        }
+        fullPath = '/api/resumes/' + validSegments.join('/');
+        console.log('Reconstructed path from query.path:', fullPath);
       }
-    } else if (urlPath.startsWith('/api/resumes')) {
-      fullPath = urlPath;
-      console.log('Using path from URL:', fullPath);
-    } else {
-      return res.status(404).json({ error: 'Not a resume route' });
+    } else if (req.url && req.url.startsWith('/api/resumes')) {
+      const urlPath = req.url.split('?')[0];
+      if (urlPath.startsWith('/api/resumes')) {
+        fullPath = urlPath;
+        console.log('Using path from URL:', fullPath);
+      }
     }
     
     // Extract dynamic route parameters (e.g., /api/resumes/:id or /api/resumes/:id/download)
