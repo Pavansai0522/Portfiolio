@@ -17,10 +17,20 @@ module.exports = async (req, res) => {
     
     // Reconstruct the full path from query or URL
     // Vercel's [...path] catch-all passes segments in req.query.path
+    // For base route /api/resumes, Vercel might route it here or we need to handle it
     let fullPath = '/api/resumes';
     
-    // Check if we have path segments from Vercel's catch-all routing
-    if (req.query && req.query.path !== undefined) {
+    // First, try to get path from URL (most reliable)
+    if (req.url) {
+      const urlPath = req.url.split('?')[0];
+      if (urlPath === '/api/resumes' || urlPath.startsWith('/api/resumes/')) {
+        fullPath = urlPath;
+        console.log('Using path from URL:', fullPath);
+      }
+    }
+    
+    // If URL didn't give us a path, try query.path (Vercel catch-all routing)
+    if (fullPath === '/api/resumes' && req.query && req.query.path !== undefined) {
       const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
       const validSegments = pathSegments.filter(s => s && s !== null && s !== undefined && s.toString().trim() !== '');
       if (validSegments.length > 0) {
@@ -28,26 +38,8 @@ module.exports = async (req, res) => {
         const joinedPath = validSegments.join('/');
         fullPath = '/api/resumes/' + joinedPath;
         console.log('Reconstructed path from query.path:', fullPath);
-      } else {
-        // Empty path array means we're at /api/resumes (root)
-        fullPath = '/api/resumes';
-        console.log('Empty path segments, using root:', fullPath);
       }
-    } else if (req.url) {
-      // Try to extract from URL directly
-      const urlPath = req.url.split('?')[0];
-      if (urlPath === '/api/resumes' || urlPath.startsWith('/api/resumes/')) {
-        fullPath = urlPath;
-        console.log('Using path from URL:', fullPath);
-      } else if (urlPath.startsWith('/api/')) {
-        // If URL starts with /api/ but not /api/resumes, might be Vercel routing
-        // Try to extract resumes path
-        const match = urlPath.match(/\/api\/resumes(\/.*)?/);
-        if (match) {
-          fullPath = match[0] || '/api/resumes';
-          console.log('Extracted path from URL match:', fullPath);
-        }
-      }
+      // If validSegments is empty, we're at /api/resumes (root) - keep fullPath as is
     }
     
     // Extract dynamic route parameters (e.g., /api/resumes/:id or /api/resumes/:id/download)
