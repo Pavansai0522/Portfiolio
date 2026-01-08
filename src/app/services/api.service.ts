@@ -159,10 +159,10 @@ export class ApiService {
     formData.append('resume', file, file.name);
     
     // Get auth token and add to headers
-    const token = this.authService.getAuthHeader();
+    const authHeader = this.authService.getAuthHeader();
     let headers = new HttpHeaders();
-    if (token && token['Authorization']) {
-      headers = headers.set('Authorization', token['Authorization']);
+    if (authHeader && 'Authorization' in authHeader) {
+      headers = headers.set('Authorization', authHeader.Authorization);
     }
     
     return this.http.post<ResumeUploadResponse>(`${this.apiUrl}/resumes/upload`, formData, {
