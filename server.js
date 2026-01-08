@@ -49,21 +49,35 @@ app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Configure multer for file uploads
-const uploadsDir = path.join(__dirname, 'uploads', 'resumes');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Use memory storage for Vercel (serverless) or disk storage for local development
+const isVercel = process.env.VERCEL || process.env.NOW_REGION;
+let storage;
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `resume-${uniqueSuffix}${ext}`);
+if (isVercel) {
+  // Use memory storage in Vercel (serverless environment)
+  storage = multer.memoryStorage();
+} else {
+  // Use disk storage for local development
+  const uploadsDir = path.join(__dirname, 'uploads', 'resumes');
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, `resume-${uniqueSuffix}${ext}`);
+      }
+    });
+  } catch (error) {
+    console.warn('Failed to create uploads directory, using memory storage:', error.message);
+    storage = multer.memoryStorage();
   }
-});
+}
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -1314,13 +1328,37 @@ app.post('/api/resumes/upload', authenticateToken, upload.single('resume'), asyn
       });
     }
 
+    // Handle memory storage (Vercel) vs disk storage (local)
+    const isVercel = process.env.VERCEL || process.env.NOW_REGION;
+    let filePath;
+    
+    if (isVercel || !req.file.path) {
+      // Memory storage - store file buffer in MongoDB or use /tmp
+      // For now, store as base64 in a temporary field or use /tmp
+      const tmpDir = '/tmp';
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(req.file.originalname);
+      filePath = path.join(tmpDir, `resume-${uniqueSuffix}${ext}`);
+      
+      try {
+        fs.writeFileSync(filePath, req.file.buffer);
+      } catch (writeError) {
+        console.error('Error writing file to /tmp:', writeError);
+        // Fallback: store buffer reference (file will be lost on serverless restart)
+        filePath = `memory:${uniqueSuffix}`;
+      }
+    } else {
+      // Disk storage (local development)
+      filePath = req.file.path;
+    }
+
     const resume = new Resume({
       userId: userId,
       name: req.file.originalname,
       originalName: req.file.originalname,
       size: req.file.size,
       type: req.file.mimetype,
-      filePath: req.file.path
+      filePath: filePath
     });
 
     await resume.save();
@@ -1343,11 +1381,22 @@ app.post('/api/resumes/upload', authenticateToken, upload.single('resume'), asyn
     console.error('Error uploading resume:', error);
     
     // Clean up uploaded file if resume creation failed
-    if (req.file && req.file.path) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting uploaded file:', unlinkError);
+    if (req.file) {
+      if (req.file.path && fs.existsSync && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error('Error deleting uploaded file:', unlinkError);
+        }
+      } else if (req.file.buffer && req.file.buffer.tmpPath) {
+        // Clean up /tmp file if it exists
+        try {
+          if (fs.existsSync && fs.existsSync(req.file.buffer.tmpPath)) {
+            fs.unlinkSync(req.file.buffer.tmpPath);
+          }
+        } catch (unlinkError) {
+          console.error('Error deleting temp file:', unlinkError);
+        }
       }
     }
 
@@ -1373,8 +1422,13 @@ app.get('/api/resumes/:id/download', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Resume not found' });
     }
 
+    // Handle memory storage paths (Vercel) or disk storage paths
+    if (resume.filePath && resume.filePath.startsWith('memory:')) {
+      return res.status(404).json({ error: 'Resume file not available (stored in memory, server restarted)' });
+    }
+
     // Check if file exists
-    if (!fs.existsSync(resume.filePath)) {
+    if (!fs.existsSync || !fs.existsSync(resume.filePath)) {
       return res.status(404).json({ error: 'Resume file not found on server' });
     }
 
