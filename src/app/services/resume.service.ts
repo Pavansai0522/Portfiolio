@@ -87,13 +87,36 @@ export class ResumeService {
       return;
     }
 
-    // Use the openResume API method which uses inline disposition
+    // For PDFs and documents, create blob URL and open in new window
+    // The API returns with inline disposition for viewing
     this.apiService.openResume(resumeId).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        // Clean up after a delay to allow the browser to load the file
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        // Create object URL from blob
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // For PDFs, open in new window - browser will display inline
+        if (resume.type === 'application/pdf') {
+          const newWindow = window.open(blobUrl, '_blank');
+          if (!newWindow) {
+            alert('Please allow popups to view the resume');
+            URL.revokeObjectURL(blobUrl);
+            return;
+          }
+          // Clean up after window loads (longer delay for PDFs)
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        } else {
+          // For Word documents, create download link but try to open
+          // Most browsers will prompt to open with default app
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          // Clean up after a delay
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        }
       },
       error: (err) => {
         console.error('Error opening resume:', err);
