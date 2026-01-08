@@ -159,4 +159,13 @@ export class JobsComponent implements OnInit {
   protected getJobCountForCategory(category: string): number {
     return this.allJobs().filter(job => job.category === category).length;
   }
+
+  protected stripHtml(html: string): string {
+    if (!html) return '';
+    // Create a temporary div element to parse HTML
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    // Get text content and clean up whitespace
+    return tmp.textContent || tmp.innerText || '';
+  }
 }

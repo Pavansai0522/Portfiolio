@@ -7,7 +7,11 @@ const https = require('https');
 const connectDB = require('./config/database');
 const Portfolio = require('./models/Portfolio');
 const User = require('./models/User');
+const Resume = require('./models/Resume');
 const { sendVerificationEmail, generateVerificationToken } = require('./utils/emailService');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +46,39 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Configure multer for file uploads
+const uploadsDir = path.join(__dirname, 'uploads', 'resumes');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `resume-${uniqueSuffix}${ext}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: fileFilter
+});
 
 // JWT Secret (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -1231,6 +1268,174 @@ app.get('/api/jobs', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to fetch job listings' 
+    });
+  }
+});
+
+// ==================== Resume Routes (Protected) ====================
+
+// GET /api/resumes - Get all resumes for authenticated user
+app.get('/api/resumes', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+
+    const resumes = await Resume.getResumesByUserId(userId);
+    
+    const resumesData = resumes.map(resume => ({
+      id: resume._id.toString(),
+      name: resume.name,
+      uploadedAt: resume.uploadedAt.toISOString(),
+      size: resume.size,
+      type: resume.type,
+      url: `${req.protocol}://${req.get('host')}/api/resumes/${resume._id}/download`
+    }));
+
+    res.json({
+      success: true,
+      resumes: resumesData,
+      total: resumesData.length
+    });
+  } catch (error) {
+    console.error('Error fetching resumes:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch resumes' 
+    });
+  }
+});
+
+// POST /api/resumes/upload - Upload a resume file
+app.post('/api/resumes/upload', authenticateToken, upload.single('resume'), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'No file uploaded' 
+      });
+    }
+
+    const resume = new Resume({
+      userId: userId,
+      name: req.file.originalname,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      type: req.file.mimetype,
+      filePath: req.file.path
+    });
+
+    await resume.save();
+
+    const resumeData = {
+      id: resume._id.toString(),
+      name: resume.name,
+      uploadedAt: resume.uploadedAt.toISOString(),
+      size: resume.size,
+      type: resume.type,
+      url: `${req.protocol}://${req.get('host')}/api/resumes/${resume._id}/download`
+    };
+
+    res.status(201).json({
+      success: true,
+      resume: resumeData,
+      message: 'Resume uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Error uploading resume:', error);
+    
+    // Clean up uploaded file if resume creation failed
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error deleting uploaded file:', unlinkError);
+      }
+    }
+
+    res.status(500).json({ 
+      success: false,
+      error: error.message || 'Failed to upload resume' 
+    });
+  }
+});
+
+// GET /api/resumes/:id/download - Download a resume file
+app.get('/api/resumes/:id/download', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const resumeId = req.params.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+
+    const resume = await Resume.getResumeById(resumeId, userId);
+    if (!resume) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    // Check if file exists
+    if (!fs.existsSync(resume.filePath)) {
+      return res.status(404).json({ error: 'Resume file not found on server' });
+    }
+
+    // Set headers for file download
+    res.setHeader('Content-Type', resume.type);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resume.originalName)}"`);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(resume.filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error downloading resume:', error);
+    res.status(500).json({ error: 'Failed to download resume' });
+  }
+});
+
+// DELETE /api/resumes/:id - Delete a resume
+app.delete('/api/resumes/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const resumeId = req.params.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
+
+    const resume = await Resume.getResumeById(resumeId, userId);
+    if (!resume) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    // Delete file from filesystem
+    if (fs.existsSync(resume.filePath)) {
+      try {
+        fs.unlinkSync(resume.filePath);
+      } catch (unlinkError) {
+        console.error('Error deleting file:', unlinkError);
+        // Continue with database deletion even if file deletion fails
+      }
+    }
+
+    // Delete from database
+    await Resume.findByIdAndDelete(resumeId);
+
+    res.json({
+      success: true,
+      message: 'Resume deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting resume:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to delete resume' 
     });
   }
 });

@@ -96,7 +96,7 @@
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
                   <h3 class="text-xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors mb-2">
-                    {{ job.title }}
+                    {{ stripHtml(job.title) }}
                   </h3>
                   <p class="text-base text-gray-700 dark:text-gray-300 font-semibold">{{ job.company }}</p>
                 </div>
@@ -129,7 +129,7 @@
                   </div>
                 }
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-4">{{ job.description }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-4">{{ stripHtml(job.description) }}</p>
               <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ job.postedAt | date:'shortDate' }}</span>
                 <div class="flex items-center space-x-2">

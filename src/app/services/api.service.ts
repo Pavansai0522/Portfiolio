@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 
 // Interfaces
 export interface TechNewsArticle {
@@ -41,11 +42,33 @@ export interface JobsResponse {
   total: number;
 }
 
+export interface ResumeFile {
+  id: string;
+  name: string;
+  uploadedAt: string;
+  size: number;
+  type: string;
+  url?: string;
+}
+
+export interface ResumesResponse {
+  success: boolean;
+  resumes: ResumeFile[];
+  total: number;
+}
+
+export interface ResumeUploadResponse {
+  success: boolean;
+  resume: ResumeFile;
+  message?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly apiUrl = environment.apiUrl || 'http://localhost:3001/api';
 
   // Cache-busting headers
@@ -53,6 +76,16 @@ export class ApiService {
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache'
   });
+
+  // Get headers with authorization
+  private getAuthHeaders(): HttpHeaders {
+    const authHeader = this.authService.getAuthHeader();
+    return new HttpHeaders({
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      ...(authHeader as any)
+    });
+  }
 
   /**
    * Get tech news articles
@@ -107,6 +140,56 @@ export class ApiService {
    */
   deleteProject(projectId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/portfolio/projects/${projectId}`);
+  }
+
+  /**
+   * Get all resumes
+   */
+  getResumes(): Observable<ResumesResponse> {
+    return this.http.get<ResumesResponse>(`${this.apiUrl}/resumes`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  /**
+   * Upload a resume file
+   */
+  uploadResume(file: File): Observable<ResumeUploadResponse> {
+    const formData = new FormData();
+    formData.append('resume', file, file.name);
+    
+    const authHeader = this.authService.getAuthHeader();
+    const headers = new HttpHeaders(authHeader as any);
+    
+    return this.http.post<ResumeUploadResponse>(`${this.apiUrl}/resumes/upload`, formData, {
+      headers: headers
+    });
+  }
+
+  /**
+   * Download a resume file
+   */
+  downloadResume(resumeId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/resumes/${resumeId}/download`, {
+      responseType: 'blob',
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  /**
+   * Get resume file URL for viewing
+   */
+  getResumeUrl(resumeId: string): string {
+    return `${this.apiUrl}/resumes/${resumeId}/download`;
+  }
+
+  /**
+   * Delete a resume
+   */
+  deleteResume(resumeId: string): Observable<{ success: boolean; message?: string }> {
+    return this.http.delete<{ success: boolean; message?: string }>(`${this.apiUrl}/resumes/${resumeId}`, {
+      headers: this.getAuthHeaders()
+    });
   }
 }
 

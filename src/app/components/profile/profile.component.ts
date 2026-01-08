@@ -1,25 +1,36 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { PortfolioDataService, PortfolioData, Experience, Education, Achievement } from '../../services/portfolio-data.service';
 import { AboutComponent } from '../about/about.component';
+import { ResumeSectionComponent } from '../resume-section/resume-section.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AboutComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AboutComponent, ResumeSectionComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
   protected readonly portfolioService = inject(PortfolioDataService);
   protected readonly portfolioData = this.portfolioService.portfolioData;
   
   protected readonly isEditing = signal(false);
   protected readonly formData = signal<Partial<PortfolioData>>({});
-  protected readonly activeTab = signal<'overview' | 'experience' | 'education' | 'achievements'>('overview');
+  protected readonly activeTab = signal<'overview' | 'experience' | 'education' | 'achievements' | 'resume'>('overview');
+
+  ngOnInit(): void {
+    // Check for tab query parameter
+    this.route.queryParams.subscribe(params => {
+      if (params['tab'] && ['overview', 'experience', 'education', 'achievements', 'resume'].includes(params['tab'])) {
+        this.setActiveTab(params['tab'] as any);
+      }
+    });
+  }
 
   // Experience management
   protected readonly showExperienceForm = signal(false);
@@ -65,7 +76,7 @@ export class ProfileComponent {
     this.formData.set({ ...this.portfolioData() });
   }
 
-  protected setActiveTab(tab: 'overview' | 'experience' | 'education' | 'achievements'): void {
+  protected setActiveTab(tab: 'overview' | 'experience' | 'education' | 'achievements' | 'resume'): void {
     this.activeTab.set(tab);
     // Reset forms when switching tabs
     this.showExperienceForm.set(false);

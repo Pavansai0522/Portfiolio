@@ -42,6 +42,14 @@
           >
             Achievements
           </button>
+          <button
+            (click)="setActiveTab('resume')"
+            [class]="activeTab() === 'resume' 
+              ? 'px-6 py-4 border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 font-semibold' 
+              : 'px-6 py-4 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition'"
+          >
+            Resume
+          </button>
         </nav>
       </div>
     </div>
@@ -527,6 +535,11 @@
             </div>
           }
         </div>
+      }
+
+      <!-- Resume Tab -->
+      @if (activeTab() === 'resume') {
+        <app-resume-section></app-resume-section>
       }
     </div>
   </div>
