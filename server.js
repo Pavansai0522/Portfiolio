@@ -1485,9 +1485,19 @@ app.delete('/api/resumes/:id', authenticateToken, async (req, res) => {
     }
 
     // Delete file from filesystem
-    if (fs.existsSync(resume.filePath)) {
+    if (resume.filePath) {
       try {
-        fs.unlinkSync(resume.filePath);
+        // Check if file exists before trying to delete
+        if (fs.existsSync && fs.existsSync(resume.filePath)) {
+          fs.unlinkSync(resume.filePath);
+        } else if (resume.filePath.startsWith('/tmp/')) {
+          // Try to delete /tmp file even if existsSync fails
+          try {
+            fs.unlinkSync(resume.filePath);
+          } catch (tmpError) {
+            console.warn('Could not delete /tmp file:', tmpError.message);
+          }
+        }
       } catch (unlinkError) {
         console.error('Error deleting file:', unlinkError);
         // Continue with database deletion even if file deletion fails
