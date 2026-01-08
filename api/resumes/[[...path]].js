@@ -1,4 +1,5 @@
 // Vercel Serverless Function for /api/resumes and all nested routes
+// Using [[...path]] (optional catch-all) to handle both base route and nested routes
 // This handles /api/resumes, /api/resumes/upload, /api/resumes/:id, /api/resumes/:id/download
 const app = require('../../server');
 const connectDB = require('../../config/database');
@@ -16,8 +17,8 @@ module.exports = async (req, res) => {
     console.log('Query:', JSON.stringify(req.query, null, 2));
     
     // Reconstruct the full path from query or URL
-    // Vercel's [...path] catch-all passes segments in req.query.path
-    // For base route /api/resumes, Vercel might route it here or we need to handle it
+    // Vercel's [[...path]] optional catch-all passes segments in req.query.path
+    // For base route /api/resumes, query.path might be empty or undefined
     let fullPath = '/api/resumes';
     
     // First, try to get path from URL (most reliable)
