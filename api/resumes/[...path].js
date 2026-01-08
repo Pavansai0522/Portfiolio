@@ -19,19 +19,24 @@ module.exports = async (req, res) => {
     // Vercel's [...path] catch-all passes segments in req.query.path
     let fullPath = '/api/resumes';
     
-    if (req.query && req.query.path) {
+    // Check if we have path segments from Vercel's catch-all routing
+    if (req.query && req.query.path !== undefined) {
       const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
-      const validSegments = pathSegments.filter(s => s && s.trim() !== '');
+      const validSegments = pathSegments.filter(s => s && s !== null && s !== undefined && s.toString().trim() !== '');
       if (validSegments.length > 0) {
         // Join segments and ensure it starts with /api/resumes
         const joinedPath = validSegments.join('/');
         fullPath = '/api/resumes/' + joinedPath;
         console.log('Reconstructed path from query.path:', fullPath);
+      } else {
+        // Empty path array means we're at /api/resumes (root)
+        fullPath = '/api/resumes';
+        console.log('Empty path segments, using root:', fullPath);
       }
     } else if (req.url) {
       // Try to extract from URL directly
       const urlPath = req.url.split('?')[0];
-      if (urlPath.startsWith('/api/resumes')) {
+      if (urlPath === '/api/resumes' || urlPath.startsWith('/api/resumes/')) {
         fullPath = urlPath;
         console.log('Using path from URL:', fullPath);
       } else if (urlPath.startsWith('/api/')) {
@@ -39,7 +44,7 @@ module.exports = async (req, res) => {
         // Try to extract resumes path
         const match = urlPath.match(/\/api\/resumes(\/.*)?/);
         if (match) {
-          fullPath = match[0];
+          fullPath = match[0] || '/api/resumes';
           console.log('Extracted path from URL match:', fullPath);
         }
       }
