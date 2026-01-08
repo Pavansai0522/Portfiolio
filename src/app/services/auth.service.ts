@@ -55,7 +55,7 @@ export class AuthService {
   readonly currentUser = computed(() => this.user());
 
   constructor() {
-    // If token exists, load user data from sessionStorage and verify token
+    // If token exists, load user data from sessionStorage
     const storedUser = sessionStorage.getItem('user_data');
     if (storedUser) {
       try {
@@ -65,10 +65,7 @@ export class AuthService {
       }
     }
     
-    // Verify token if it exists
-    if (this.token()) {
-      this.verifyToken();
-    }
+    // Token verification removed - token validity will be checked on API calls
   }
 
   /**
@@ -134,30 +131,23 @@ export class AuthService {
   }
 
   /**
-   * Verify token validity
+   * Verify token validity (disabled - token validity checked on API calls)
    */
   verifyToken(): void {
+    // Token verification endpoint removed
+    // Token validity will be checked automatically when making authenticated API calls
     const token = this.token();
-    if (!token) return;
-
-    this.http.get<{ valid: boolean; user: any }>(`${this.apiUrl}/auth/verify`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).subscribe({
-      next: (response) => {
-        if (response.valid) {
-          this.user.set(response.user);
-          // Update sessionStorage with verified user data
-          sessionStorage.setItem('user_data', JSON.stringify(response.user));
-          // Reload portfolio data for the authenticated user
-          this.portfolioDataService.reloadPortfolioData();
-        } else {
-          this.logout();
+    if (token) {
+      // Just ensure user data is loaded from sessionStorage
+      const storedUser = sessionStorage.getItem('user_data');
+      if (storedUser) {
+        try {
+          this.user.set(JSON.parse(storedUser));
+        } catch (e) {
+          console.error('Error parsing user data:', e);
         }
-      },
-      error: () => {
-        this.logout();
       }
-    });
+    }
   }
 
   /**

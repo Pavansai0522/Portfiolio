@@ -241,14 +241,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// GET /api/auth/verify - Verify JWT token
-app.get('/api/auth/verify', authenticateToken, (req, res) => {
-  res.json({
-    valid: true,
-    user: req.user
-  });
-});
-
 // GET /api/auth/verify-email - Verify email address
 app.get('/api/auth/verify-email', async (req, res) => {
   try {
@@ -1491,7 +1483,6 @@ app.use('/api/*', (req, res) => {
     availableEndpoints: [
       'POST /api/auth/register',
       'POST /api/auth/login',
-      'GET /api/auth/verify',
       'GET /api/auth/verify-email',
       'POST /api/auth/resend-verification',
       'GET /api/health'
