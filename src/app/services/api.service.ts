@@ -172,9 +172,19 @@ export class ApiService {
   }
 
   /**
-   * Download a resume file
+   * Download a resume file (forces download)
    */
   downloadResume(resumeId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/resumes/${resumeId}/download?download=true`, {
+      responseType: 'blob',
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  /**
+   * Open/view a resume file (opens in browser)
+   */
+  openResume(resumeId: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/resumes/${resumeId}/download`, {
       responseType: 'blob',
       headers: this.getAuthHeaders()

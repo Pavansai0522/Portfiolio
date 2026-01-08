@@ -1441,8 +1441,12 @@ app.get('/api/resumes/:id/download', authenticateToken, async (req, res) => {
     }
 
     // Set headers for file download/viewing
+    // Use query parameter to determine if it's for viewing (open) or downloading
+    const isDownload = req.query.download === 'true' || req.query.download === '1';
+    const disposition = isDownload ? 'attachment' : 'inline';
+    
     res.setHeader('Content-Type', resume.type);
-    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(resume.originalName)}"`);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(resume.originalName)}"`);
     res.setHeader('Cache-Control', 'no-cache');
     
     // Stream the file

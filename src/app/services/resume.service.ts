@@ -78,7 +78,7 @@ export class ResumeService {
   }
 
   /**
-   * Open a resume file in a new tab
+   * Open a resume file in a new tab (for viewing)
    */
   openResume(resumeId: string): void {
     const resume = this.resumesSignal().find(r => r.id === resumeId);
@@ -87,8 +87,8 @@ export class ResumeService {
       return;
     }
 
-    // Download the file first (with auth), then open it
-    this.apiService.downloadResume(resumeId).subscribe({
+    // Use the openResume API method which uses inline disposition
+    this.apiService.openResume(resumeId).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
