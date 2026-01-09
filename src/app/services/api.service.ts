@@ -28,6 +28,7 @@ export interface JobListing {
   postedAt: string;
   salary?: string | null;
   category?: string | null;
+  matchPercentage?: number | null;
 }
 
 export interface TechNewsResponse {
@@ -103,7 +104,7 @@ export class ApiService {
     const timestamp = Date.now();
     const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
     return this.http.get<JobsResponse>(`${this.apiUrl}/jobs?t=${timestamp}${searchParam}`, {
-      headers: this.noCacheHeaders
+      headers: this.getAuthHeaders()
     });
   }
 

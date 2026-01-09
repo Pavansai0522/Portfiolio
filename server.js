@@ -115,6 +115,26 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Optional authentication middleware - doesn't fail if no token provided
+const optionalAuthenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      req.user = null;
+      return next();
+    }
+    req.user = user;
+    next();
+  });
+};
+
 // Connect to MongoDB
 // Note: In serverless environments (Vercel), connection is handled in api/[...path].js
 // This call is for local development only
@@ -1125,6 +1145,127 @@ async function getThumbnail(url) {
 }
 
 // Helper function to shuffle array (Fisher-Yates algorithm)
+// Function to calculate match percentage between portfolio and job description
+function calculateMatchPercentage(portfolio, jobDescription) {
+  if (!portfolio || !jobDescription) {
+    return 0;
+  }
+
+  // Normalize text for comparison (lowercase, remove special chars)
+  const normalize = (text) => {
+    if (!text) return '';
+    return text.toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  // Extract keywords from job description
+  const jobText = normalize(jobDescription);
+  const jobWords = new Set(jobText.split(/\s+/).filter(w => w.length > 2));
+
+  // Collect all user skills and keywords
+  const userKeywords = new Set();
+  
+  // Add skills
+  if (portfolio.skills && Array.isArray(portfolio.skills)) {
+    portfolio.skills.forEach(skill => {
+      const normalized = normalize(skill);
+      if (normalized) {
+        normalized.split(/\s+/).forEach(word => {
+          if (word.length > 2) userKeywords.add(word);
+        });
+      }
+    });
+  }
+
+  // Add technologies from projects
+  if (portfolio.projects && Array.isArray(portfolio.projects)) {
+    portfolio.projects.forEach(project => {
+      if (project.technologies && Array.isArray(project.technologies)) {
+        project.technologies.forEach(tech => {
+          const normalized = normalize(tech);
+          if (normalized) {
+            normalized.split(/\s+/).forEach(word => {
+              if (word.length > 2) userKeywords.add(word);
+            });
+          }
+        });
+      }
+      // Also add project description keywords
+      if (project.description) {
+        const normalized = normalize(project.description);
+        normalized.split(/\s+/).forEach(word => {
+          if (word.length > 3) userKeywords.add(word);
+        });
+      }
+    });
+  }
+
+  // Add experience keywords
+  if (portfolio.experience && Array.isArray(portfolio.experience)) {
+    portfolio.experience.forEach(exp => {
+      // Add position title keywords
+      if (exp.position) {
+        const normalized = normalize(exp.position);
+        normalized.split(/\s+/).forEach(word => {
+          if (word.length > 2) userKeywords.add(word);
+        });
+      }
+      // Add description keywords
+      if (exp.description) {
+        const normalized = normalize(exp.description);
+        normalized.split(/\s+/).forEach(word => {
+          if (word.length > 3) userKeywords.add(word);
+        });
+      }
+    });
+  }
+
+  // Add education field keywords
+  if (portfolio.education && Array.isArray(portfolio.education)) {
+    portfolio.education.forEach(edu => {
+      if (edu.field) {
+        const normalized = normalize(edu.field);
+        normalized.split(/\s+/).forEach(word => {
+          if (word.length > 2) userKeywords.add(word);
+        });
+      }
+      if (edu.degree) {
+        const normalized = normalize(edu.degree);
+        normalized.split(/\s+/).forEach(word => {
+          if (word.length > 2) userKeywords.add(word);
+        });
+      }
+    });
+  }
+
+  // Calculate matches
+  let matches = 0;
+  jobWords.forEach(jobWord => {
+    if (userKeywords.has(jobWord)) {
+      matches++;
+    }
+  });
+
+  // Calculate percentage (matches / total job keywords)
+  // Minimum 20% if user has skills, maximum 100%
+  if (jobWords.size === 0) {
+    return portfolio.skills && portfolio.skills.length > 0 ? 20 : 0;
+  }
+
+  const baseMatch = (matches / jobWords.size) * 100;
+  
+  // Boost match if user has relevant skills (even if not all keywords match)
+  const skillsBoost = portfolio.skills && portfolio.skills.length > 0 ? 15 : 0;
+  const experienceBoost = portfolio.experience && portfolio.experience.length > 0 ? 10 : 0;
+  
+  const totalMatch = Math.min(100, Math.max(20, baseMatch + skillsBoost + experienceBoost));
+  
+  // Round to nearest 5 for cleaner display
+  return Math.round(totalMatch / 5) * 5;
+}
+
 function shuffleArray(array) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1200,9 +1341,69 @@ app.get('/api/tech-news', async (req, res) => {
   }
 });
 
+// Helper function to strip HTML tags from text
+function stripHtml(html) {
+  if (!html) return '';
+  let text = html;
+  
+  // Remove HTML tags first
+  text = text.replace(/<[^>]*>/g, '');
+  
+  // Decode common HTML entities
+  const entityMap = {
+    '&nbsp;': ' ',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&apos;': "'",
+    '&nbsp': ' ',
+    '&amp': '&',
+    '&lt': '<',
+    '&gt': '>',
+    '&quot': '"'
+  };
+  
+  // Replace named entities
+  for (const [entity, char] of Object.entries(entityMap)) {
+    text = text.replace(new RegExp(entity, 'gi'), char);
+  }
+  
+  // Decode numeric entities (&#39;, &#160;, etc.)
+  text = text.replace(/&#(\d+);/g, (match, dec) => {
+    return String.fromCharCode(parseInt(dec, 10));
+  });
+  
+  // Decode hex entities (&#x27;, &#xA0;, etc.)
+  text = text.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+  
+  // Remove any remaining HTML entities
+  text = text.replace(/&[#\w]+;/g, '');
+  
+  // Clean up whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+  
+  return text;
+}
+
 // GET /api/jobs - Get job listings from Remotive API
-app.get('/api/jobs', async (req, res) => {
+app.get('/api/jobs', optionalAuthenticateToken, async (req, res) => {
   try {
+    // Get portfolio data for matching (if user is authenticated)
+    let portfolio = null;
+    if (req.user && req.user.userId) {
+      try {
+        const userEmail = req.user.email;
+        portfolio = await Portfolio.getPortfolio(req.user.userId, userEmail);
+      } catch (portfolioError) {
+        console.error('Error fetching portfolio for matching:', portfolioError);
+        // Continue without portfolio
+      }
+    }
+    
     // Fetch jobs from Remotive API with cache-busting
     const searchQuery = req.query.search;
     // Add timestamp to prevent caching
@@ -1251,18 +1452,40 @@ app.get('/api/jobs', async (req, res) => {
     // Format jobs from Remotive API response (take up to 50 jobs for better variety)
     const maxJobs = Math.min(50, shuffledJobs.length);
     console.log(`Returning ${maxJobs} jobs after shuffling`);
-    const jobs = shuffledJobs.slice(0, maxJobs).map((job, index) => ({
-      id: job.id || index + 1,
-      title: job.title || 'Untitled Position',
-      company: job.company_name || 'Company Not Specified',
-      location: job.candidate_required_location || 'Remote',
-      type: job.job_type || 'Full-time',
-      description: job.description ? job.description.substring(0, 200) + '...' : 'No description available',
-      url: job.url || `https://remotive.com/remote-jobs/${job.id}`,
-      postedAt: job.publication_date || new Date().toISOString(),
-      salary: job.salary || null,
-      category: job.category || null
-    }));
+    const jobs = shuffledJobs.slice(0, maxJobs).map((job, index) => {
+      // Calculate match percentage if portfolio exists
+      let matchPercentage = null;
+      if (portfolio) {
+        // Use full job description for matching
+        const fullDescription = job.description || '';
+        matchPercentage = calculateMatchPercentage(portfolio, fullDescription);
+      }
+      
+      // Strip HTML from description before truncating
+      let cleanDescription = job.description ? stripHtml(job.description) : '';
+      if (cleanDescription && cleanDescription.length > 200) {
+        cleanDescription = cleanDescription.substring(0, 200) + '...';
+      } else if (!cleanDescription) {
+        cleanDescription = 'No description available';
+      }
+      
+      // Strip HTML from title as well
+      const cleanTitle = job.title ? stripHtml(job.title) : 'Untitled Position';
+      
+      return {
+        id: job.id || index + 1,
+        title: cleanTitle,
+        company: job.company_name || 'Company Not Specified',
+        location: job.candidate_required_location || 'Remote',
+        type: job.job_type || 'Full-time',
+        description: cleanDescription,
+        url: job.url || `https://remotive.com/remote-jobs/${job.id}`,
+        postedAt: job.publication_date || new Date().toISOString(),
+        salary: job.salary || null,
+        category: job.category || null,
+        matchPercentage: matchPercentage
+      };
+    });
     
     res.json({
       success: true,
