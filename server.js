@@ -1151,6 +1151,12 @@ function calculateMatchPercentage(portfolio, jobDescription) {
     return 0;
   }
 
+  // Strip HTML from job description first
+  const cleanJobDescription = stripHtml(jobDescription);
+  if (!cleanJobDescription || cleanJobDescription.trim().length === 0) {
+    return 0;
+  }
+
   // Normalize text for comparison (lowercase, remove special chars)
   const normalize = (text) => {
     if (!text) return '';
@@ -1160,20 +1166,41 @@ function calculateMatchPercentage(portfolio, jobDescription) {
       .trim();
   };
 
-  // Extract keywords from job description
-  const jobText = normalize(jobDescription);
-  const jobWords = new Set(jobText.split(/\s+/).filter(w => w.length > 2));
+  // Extract keywords from job description (filter out common words)
+  const commonWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'let', 'put', 'say', 'she', 'too', 'use', 'with', 'this', 'that', 'from', 'have', 'will', 'been', 'more', 'what', 'when', 'where', 'which', 'there', 'their', 'them', 'they', 'than', 'then', 'these', 'those']);
+  const jobText = normalize(cleanJobDescription);
+  // Extract words of length 3+ and also keep important technical terms (even if 2 chars like "js", "ui", "ux")
+  const jobWords = new Set();
+  const words = jobText.split(/\s+/);
+  words.forEach(w => {
+    if (w.length >= 3 && !commonWords.has(w)) {
+      jobWords.add(w);
+    } else if (w.length === 2 && ['js', 'ui', 'ux', 'ai', 'ml', 'db', 'api', 'ci', 'cd'].includes(w)) {
+      jobWords.add(w);
+    }
+  });
+
+  if (jobWords.size === 0) {
+    return 0;
+  }
 
   // Collect all user skills and keywords
   const userKeywords = new Set();
+  const userSkills = new Set(); // Keep skills separate for better matching
   
-  // Add skills
+  // Add skills (keep full skill names for exact matching)
   if (portfolio.skills && Array.isArray(portfolio.skills)) {
     portfolio.skills.forEach(skill => {
       const normalized = normalize(skill);
       if (normalized) {
-        normalized.split(/\s+/).forEach(word => {
-          if (word.length > 2) userKeywords.add(word);
+        // Add full skill name (handle multi-word skills like "react.js", "node.js")
+        userSkills.add(normalized);
+        // Also add individual words
+        normalized.split(/[\s\-_\.]+/).forEach(word => {
+          if (word.length >= 2) {
+            userKeywords.add(word);
+            userSkills.add(word);
+          }
         });
       }
     });
@@ -1186,8 +1213,12 @@ function calculateMatchPercentage(portfolio, jobDescription) {
         project.technologies.forEach(tech => {
           const normalized = normalize(tech);
           if (normalized) {
+            userSkills.add(normalized);
             normalized.split(/\s+/).forEach(word => {
-              if (word.length > 2) userKeywords.add(word);
+              if (word.length > 2) {
+                userKeywords.add(word);
+                userSkills.add(word);
+              }
             });
           }
         });
@@ -1240,27 +1271,102 @@ function calculateMatchPercentage(portfolio, jobDescription) {
     });
   }
 
-  // Calculate matches
-  let matches = 0;
+  // Calculate matches - check both individual words and full skill names
+  const matchedWords = new Set();
+  let exactMatches = 0;
+  let skillMatches = 0;
+  
+  // First, check for exact keyword matches
   jobWords.forEach(jobWord => {
     if (userKeywords.has(jobWord)) {
-      matches++;
+      matchedWords.add(jobWord);
+      exactMatches++;
+    }
+  });
+  
+  // Then check for skill matches (full skill names in job description)
+  // This handles cases like "javascript" matching "javascript developer" or "react" matching "reactjs"
+  jobWords.forEach(jobWord => {
+    // Skip if already matched
+    if (matchedWords.has(jobWord)) return;
+    
+    // Check if any user skill matches this job word
+    for (const skill of userSkills) {
+      // Exact match
+      if (skill === jobWord) {
+        matchedWords.add(jobWord);
+        skillMatches++;
+        break;
+      }
+      // Partial match for longer words (e.g., "javascript" in "javascript developer")
+      if (skill.length >= 4 && jobWord.length >= 4) {
+        // Check if skill is a substring of job word or vice versa
+        if (jobWord.includes(skill) || skill.includes(jobWord)) {
+          matchedWords.add(jobWord);
+          skillMatches++;
+          break;
+        }
+      }
+      // Handle variations like "react" vs "reactjs", "node" vs "nodejs"
+      if (skill.length >= 3 && jobWord.length >= 3) {
+        const skillBase = skill.replace(/[^a-z0-9]/g, '');
+        const jobBase = jobWord.replace(/[^a-z0-9]/g, '');
+        if (skillBase === jobBase || skillBase.includes(jobBase) || jobBase.includes(skillBase)) {
+          matchedWords.add(jobWord);
+          skillMatches++;
+          break;
+        }
+      }
     }
   });
 
-  // Calculate percentage (matches / total job keywords)
-  // Minimum 20% if user has skills, maximum 100%
-  if (jobWords.size === 0) {
-    return portfolio.skills && portfolio.skills.length > 0 ? 20 : 0;
+  const totalMatches = exactMatches + skillMatches;
+  
+  // Only return match if there are actual matches
+  if (totalMatches === 0) {
+    return 0;
   }
 
-  const baseMatch = (matches / jobWords.size) * 100;
+  // Calculate base match percentage based on matched keywords
+  // Use a weighted approach: exact matches count more than partial matches
+  const exactMatchWeight = 1.0;
+  const skillMatchWeight = 0.8;
+  const weightedMatches = (exactMatches * exactMatchWeight) + (skillMatches * skillMatchWeight);
   
-  // Boost match if user has relevant skills (even if not all keywords match)
-  const skillsBoost = portfolio.skills && portfolio.skills.length > 0 ? 15 : 0;
-  const experienceBoost = portfolio.experience && portfolio.experience.length > 0 ? 10 : 0;
+  if (jobWords.size === 0) {
+    return 0;
+  }
   
-  const totalMatch = Math.min(100, Math.max(20, baseMatch + skillsBoost + experienceBoost));
+  const baseMatch = (weightedMatches / jobWords.size) * 100;
+  
+  // Add bonus for having multiple skills matched (up to 20% bonus)
+  const skillsCount = portfolio.skills ? portfolio.skills.length : 0;
+  const skillBonus = Math.min(20, Math.min(skillsCount, totalMatches) * 4);
+  
+  // Add boost if user has relevant experience (max 15%)
+  let experienceBoost = 0;
+  if (portfolio.experience && portfolio.experience.length > 0 && totalMatches > 0) {
+    experienceBoost = Math.min(15, portfolio.experience.length * 3);
+  }
+  
+  // Add boost for projects with technologies (max 10%)
+  let projectBoost = 0;
+  if (portfolio.projects && portfolio.projects.length > 0 && totalMatches > 0) {
+    const projectTechCount = portfolio.projects.reduce((count, p) => {
+      return count + (p.technologies ? p.technologies.length : 0);
+    }, 0);
+    projectBoost = Math.min(10, projectTechCount * 2);
+  }
+  
+  // Calculate total match
+  let totalMatch = baseMatch + skillBonus + experienceBoost + projectBoost;
+  
+  // Cap at 100% - no forced minimum, but ensure at least 15% if there are any matches
+  if (totalMatches > 0) {
+    totalMatch = Math.min(100, Math.max(15, totalMatch));
+  } else {
+    return 0;
+  }
   
   // Round to nearest 5 for cleaner display
   return Math.round(totalMatch / 5) * 5;
