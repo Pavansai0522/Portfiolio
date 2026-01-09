@@ -1503,7 +1503,18 @@ app.get('/api/jobs', optionalAuthenticateToken, async (req, res) => {
     if (req.user && req.user.userId) {
       try {
         const userEmail = req.user.email;
-        portfolio = await Portfolio.getPortfolio(req.user.userId, userEmail);
+        const portfolioDoc = await Portfolio.getPortfolio(req.user.userId, userEmail);
+        // Convert Mongoose document to plain object for matching
+        if (portfolioDoc) {
+          portfolio = portfolioDoc.toObject ? portfolioDoc.toObject() : portfolioDoc;
+          // Debug: Log portfolio structure
+          console.log('Portfolio for matching:', {
+            hasSkills: portfolio.skills && portfolio.skills.length > 0,
+            skills: portfolio.skills ? portfolio.skills.slice(0, 5) : [],
+            hasExperience: portfolio.experience && portfolio.experience.length > 0,
+            hasProjects: portfolio.projects && portfolio.projects.length > 0
+          });
+        }
       } catch (portfolioError) {
         console.error('Error fetching portfolio for matching:', portfolioError);
         // Continue without portfolio
@@ -1565,6 +1576,17 @@ app.get('/api/jobs', optionalAuthenticateToken, async (req, res) => {
         // Use full job description for matching
         const fullDescription = job.description || '';
         matchPercentage = calculateMatchPercentage(portfolio, fullDescription);
+        
+        // Debug logging (remove in production if needed)
+        if (index === 0) {
+          console.log('Portfolio data for matching:', {
+            hasSkills: portfolio.skills && portfolio.skills.length > 0,
+            skillsCount: portfolio.skills ? portfolio.skills.length : 0,
+            hasExperience: portfolio.experience && portfolio.experience.length > 0,
+            hasProjects: portfolio.projects && portfolio.projects.length > 0,
+            matchPercentage: matchPercentage
+          });
+        }
       }
       
       // Strip HTML from description before truncating
