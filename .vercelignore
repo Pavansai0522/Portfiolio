@@ -5,5 +5,5 @@ node_modules
 data/
 *.md
 !README.md
-api/_archive/
+_api_archive/
 
