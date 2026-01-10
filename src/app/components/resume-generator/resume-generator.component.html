@@ -120,24 +120,35 @@
               rows="3"
             ></textarea>
             <div class="grid grid-cols-2 gap-3 mb-3">
-              <input 
-                type="text" 
-                [(ngModel)]="newExperience.startDate" 
-                placeholder="Start Date (e.g., Jan 2020)"
-                class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm transition-colors focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-              <input 
-                type="text" 
-                [(ngModel)]="newExperience.endDate" 
-                placeholder="End Date (leave empty if current)"
-                class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm transition-colors focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                [disabled]="newExperience.isCurrent ?? false"
-              />
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [matDatepicker]="newExperienceStartPicker"
+                  [value]="newExperienceStartDate"
+                  (dateChange)="onNewExperienceStartDateChange($event.value)"
+                  placeholder="Start Date"
+                />
+                <mat-datepicker-toggle matSuffix [for]="newExperienceStartPicker"></mat-datepicker-toggle>
+                <mat-datepicker #newExperienceStartPicker startView="month" [startAt]="newExperienceStartDate"></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [matDatepicker]="newExperienceEndPicker"
+                  [value]="newExperienceEndDate"
+                  (dateChange)="onNewExperienceEndDateChange($event.value)"
+                  [disabled]="newExperience.isCurrent ?? false"
+                  placeholder="End Date"
+                />
+                <mat-datepicker-toggle matSuffix [for]="newExperienceEndPicker"></mat-datepicker-toggle>
+                <mat-datepicker #newExperienceEndPicker startView="month" [startAt]="newExperienceEndDate"></mat-datepicker>
+              </mat-form-field>
             </div>
             <label class="flex items-center gap-2 mb-3 font-normal cursor-pointer">
               <input 
                 type="checkbox" 
-                [(ngModel)]="newExperience.isCurrent"
+                [ngModel]="newExperience.isCurrent"
+                (ngModelChange)="onNewExperienceIsCurrentChange($event)"
                 class="w-auto cursor-pointer"
               />
               Current Position
@@ -187,24 +198,35 @@
               class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm transition-colors focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 mb-3"
             />
             <div class="grid grid-cols-2 gap-3 mb-3">
-              <input 
-                type="text" 
-                [(ngModel)]="newEducation.startDate" 
-                placeholder="Start Date"
-                class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm transition-colors focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-              <input 
-                type="text" 
-                [(ngModel)]="newEducation.endDate" 
-                placeholder="End Date (leave empty if current)"
-                class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm transition-colors focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                [disabled]="newEducation.isCurrent ?? false"
-              />
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [matDatepicker]="newEducationStartPicker"
+                  [value]="newEducationStartDate"
+                  (dateChange)="onNewEducationStartDateChange($event.value)"
+                  placeholder="Start Date"
+                />
+                <mat-datepicker-toggle matSuffix [for]="newEducationStartPicker"></mat-datepicker-toggle>
+                <mat-datepicker #newEducationStartPicker startView="month" [startAt]="newEducationStartDate"></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [matDatepicker]="newEducationEndPicker"
+                  [value]="newEducationEndDate"
+                  (dateChange)="onNewEducationEndDateChange($event.value)"
+                  [disabled]="newEducation.isCurrent ?? false"
+                  placeholder="End Date"
+                />
+                <mat-datepicker-toggle matSuffix [for]="newEducationEndPicker"></mat-datepicker-toggle>
+                <mat-datepicker #newEducationEndPicker startView="month" [startAt]="newEducationEndDate"></mat-datepicker>
+              </mat-form-field>
             </div>
             <label class="flex items-center gap-2 mb-3 font-normal cursor-pointer">
               <input 
                 type="checkbox" 
-                [(ngModel)]="newEducation.isCurrent"
+                [ngModel]="newEducation.isCurrent"
+                (ngModelChange)="onNewEducationIsCurrentChange($event)"
                 class="w-auto cursor-pointer"
               />
               Currently Enrolled

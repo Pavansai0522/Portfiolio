@@ -2,6 +2,10 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { ResumeGeneratorService, ResumeData, ExperienceItem, EducationItem, Template } from '../../services/resume-generator.service';
 import { PortfolioDataService, Experience, Education } from '../../services/portfolio-data.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -9,7 +13,14 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 @Component({
   selector: 'app-resume-generator',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, 
+    FormsModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatFormFieldModule,
+    MatInputModule
+  ],
   templateUrl: './resume-generator.component.html',
   styleUrl: './resume-generator.component.scss'
 })
@@ -51,6 +62,12 @@ export class ResumeGeneratorComponent implements OnInit {
     endDate: '',
     isCurrent: false
   };
+
+  // Date picker values
+  newExperienceStartDate: Date | null = null;
+  newExperienceEndDate: Date | null = null;
+  newEducationStartDate: Date | null = null;
+  newEducationEndDate: Date | null = null;
   
   showExperienceForm = signal(false);
   showEducationForm = signal(false);
@@ -127,6 +144,17 @@ export class ResumeGeneratorComponent implements OnInit {
       this.experience.set(mappedExperience);
     }
     
+    // Set date picker values for new experience if loading from portfolio
+    if (portfolio.experience && portfolio.experience.length > 0) {
+      const firstExp = portfolio.experience[0];
+      if (firstExp.startDate) {
+        this.newExperienceStartDate = this.parseDateString(firstExp.startDate);
+      }
+      if (firstExp.endDate) {
+        this.newExperienceEndDate = this.parseDateString(firstExp.endDate);
+      }
+    }
+    
     // Map education from portfolio to resume format (only if empty)
     if (portfolio.education && portfolio.education.length > 0 && this.education().length === 0) {
       const mappedEducation: EducationItem[] = portfolio.education.map((edu: Education) => ({
@@ -139,6 +167,17 @@ export class ResumeGeneratorComponent implements OnInit {
         isCurrent: edu.isCurrent || false
       }));
       this.education.set(mappedEducation);
+    }
+    
+    // Set date picker values for new education if loading from portfolio
+    if (portfolio.education && portfolio.education.length > 0) {
+      const firstEdu = portfolio.education[0];
+      if (firstEdu.startDate) {
+        this.newEducationStartDate = this.parseDateString(firstEdu.startDate);
+      }
+      if (firstEdu.endDate) {
+        this.newEducationEndDate = this.parseDateString(firstEdu.endDate);
+      }
     }
     
     // Only mark as loaded if we actually mapped some data
@@ -207,8 +246,99 @@ export class ResumeGeneratorComponent implements OnInit {
     this.updatePreview();
   }
 
+  // Helper methods for date conversion
+  parseDateString(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const months: { [key: string]: number } = {
+      'jan': 0, 'january': 0, 'feb': 1, 'february': 1, 'mar': 2, 'march': 2,
+      'apr': 3, 'april': 3, 'may': 4, 'jun': 5, 'june': 5,
+      'jul': 6, 'july': 6, 'aug': 7, 'august': 7, 'sep': 8, 'september': 8,
+      'oct': 9, 'october': 9, 'nov': 10, 'november': 10, 'dec': 11, 'december': 11
+    };
+    
+    const parts = dateStr.trim().toLowerCase().split(/\s+/);
+    if (parts.length >= 2) {
+      const monthName = parts[0];
+      const year = parseInt(parts[1]);
+      if (months[monthName] !== undefined && !isNaN(year)) {
+        return new Date(year, months[monthName], 1);
+      }
+    }
+    
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+    
+    return null;
+  }
+
+  formatDateForDisplay(date: Date | null): string {
+    if (!date) return '';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  onNewExperienceStartDateChange(date: Date | null): void {
+    this.newExperienceStartDate = date;
+    if (date) {
+      this.newExperience.startDate = this.formatDateForDisplay(date);
+    }
+  }
+
+  onNewExperienceEndDateChange(date: Date | null): void {
+    this.newExperienceEndDate = date;
+    if (date) {
+      this.newExperience.endDate = this.formatDateForDisplay(date);
+    } else {
+      this.newExperience.endDate = '';
+    }
+  }
+
+  onNewExperienceIsCurrentChange(isCurrent: boolean): void {
+    this.newExperience.isCurrent = isCurrent;
+    if (isCurrent) {
+      this.newExperienceEndDate = null;
+      this.newExperience.endDate = '';
+    }
+  }
+
+  onNewEducationStartDateChange(date: Date | null): void {
+    this.newEducationStartDate = date;
+    if (date) {
+      this.newEducation.startDate = this.formatDateForDisplay(date);
+    }
+  }
+
+  onNewEducationEndDateChange(date: Date | null): void {
+    this.newEducationEndDate = date;
+    if (date) {
+      this.newEducation.endDate = this.formatDateForDisplay(date);
+    } else {
+      this.newEducation.endDate = '';
+    }
+  }
+
+  onNewEducationIsCurrentChange(isCurrent: boolean): void {
+    this.newEducation.isCurrent = isCurrent;
+    if (isCurrent) {
+      this.newEducationEndDate = null;
+      this.newEducation.endDate = '';
+    }
+  }
+
   addExperience() {
     if (this.newExperience.position && this.newExperience.company) {
+      // Ensure dates are formatted
+      if (this.newExperienceStartDate) {
+        this.newExperience.startDate = this.formatDateForDisplay(this.newExperienceStartDate);
+      }
+      if (this.newExperienceEndDate) {
+        this.newExperience.endDate = this.formatDateForDisplay(this.newExperienceEndDate);
+      } else if (this.newExperience.isCurrent) {
+        this.newExperience.endDate = '';
+      }
+      
       this.experience.set([...this.experience(), { ...this.newExperience }]);
       this.newExperience = {
         position: '',
@@ -218,6 +348,8 @@ export class ResumeGeneratorComponent implements OnInit {
         endDate: '',
         isCurrent: false
       };
+      this.newExperienceStartDate = null;
+      this.newExperienceEndDate = null;
       this.showExperienceForm.set(false);
       this.updatePreview();
     }
@@ -230,6 +362,16 @@ export class ResumeGeneratorComponent implements OnInit {
 
   addEducation() {
     if (this.newEducation.degree && this.newEducation.institution) {
+      // Ensure dates are formatted
+      if (this.newEducationStartDate) {
+        this.newEducation.startDate = this.formatDateForDisplay(this.newEducationStartDate);
+      }
+      if (this.newEducationEndDate) {
+        this.newEducation.endDate = this.formatDateForDisplay(this.newEducationEndDate);
+      } else if (this.newEducation.isCurrent) {
+        this.newEducation.endDate = '';
+      }
+      
       this.education.set([...this.education(), { ...this.newEducation }]);
       this.newEducation = {
         degree: '',
@@ -240,6 +382,8 @@ export class ResumeGeneratorComponent implements OnInit {
         endDate: '',
         isCurrent: false
       };
+      this.newEducationStartDate = null;
+      this.newEducationEndDate = null;
       this.showEducationForm.set(false);
       this.updatePreview();
     }
