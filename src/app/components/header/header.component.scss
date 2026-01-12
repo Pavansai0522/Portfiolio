@@ -37,12 +37,12 @@
 .robot-svg {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   animation: bounce 0.6s ease-in-out infinite;
-  color: #4f46e5; /* indigo-600 */
+  color: #2563eb; /* accent-600 */
   display: block;
 }
 
 .dark .robot-svg {
-  color: #818cf8; /* indigo-400 */
+  color: #60a5fa; /* accent-400 */
 }
 
 .robot-svg .wheels {

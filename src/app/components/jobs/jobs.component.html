@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8 transition-colors">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 py-8 transition-colors">
   <div class="container mx-auto px-4">
     <!-- Header Section -->
     <div class="mb-8">
@@ -16,7 +16,7 @@
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <button 
             (click)="openFilterModal()"
-            class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition font-semibold flex items-center space-x-2 relative"
+            class="px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg hover:from-accent-700 hover:to-accent-800 transition font-semibold flex items-center space-x-2 relative"
             type="button"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@
           <button 
             (click)="refreshJobs()"
             [disabled]="isLoadingJobs()"
-            class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg hover:from-accent-700 hover:to-accent-800 transition font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             type="button"
           >
             @if (isLoadingJobs()) {
@@ -51,11 +51,11 @@
         <div class="mb-4 flex items-center gap-2 flex-wrap">
           <span class="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
           @for (category of getSelectedCategoriesArray(); track category) {
-            <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-semibold flex items-center space-x-2">
+            <span class="px-3 py-1 bg-accent-100 dark:bg-accent-900 text-accent-700 dark:text-accent-300 rounded-full text-sm font-semibold flex items-center space-x-2">
               <span>{{ category }}</span>
               <button 
                 (click)="toggleCategory(category)"
-                class="hover:text-indigo-900 dark:hover:text-indigo-100"
+                class="hover:text-accent-900 dark:hover:text-accent-100"
                 type="button"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,14 +76,14 @@
 
       @if (isLoadingJobs()) {
         <div class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600"></div>
         </div>
       } @else if (errorJobs()) {
         <div class="text-center py-12">
           <p class="text-red-600 mb-4">{{ errorJobs() }}</p>
           <button 
             (click)="refreshJobs()"
-            class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+            class="px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg hover:from-accent-700 hover:to-accent-800 transition font-semibold"
           >
             Try Again
           </button>
@@ -95,13 +95,13 @@
                  (click)="openJob(job)">
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
-                  <h3 class="text-xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors mb-2">
+                  <h3 class="text-xl font-bold text-gray-800 dark:text-white group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors mb-2">
                     {{ stripHtml(job.title) }}
                   </h3>
                   <p class="text-base text-gray-700 dark:text-gray-300 font-semibold">{{ job.company }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-2 ml-4">
-                  <span class="px-3 py-1 text-xs font-semibold bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full whitespace-nowrap">
+                  <span class="px-3 py-1 text-xs font-semibold bg-accent-100 dark:bg-accent-900 text-accent-700 dark:text-accent-300 rounded-full whitespace-nowrap">
                     {{ job.type }}
                   </span>
                   @if (job.matchPercentage !== null && job.matchPercentage !== undefined && job.matchPercentage > 0) {
@@ -148,7 +148,7 @@
                       Applied
                     </span>
                   }
-                  <div class="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold group-hover:text-purple-700 dark:group-hover:text-purple-300">
+                  <div class="flex items-center text-accent-600 dark:text-accent-400 text-sm font-semibold group-hover:text-accent-700 dark:group-hover:text-accent-300">
                     <span>{{ isJobApplied(job.id) ? 'View' : 'Apply Now' }}</span>
                     <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -167,7 +167,7 @@
               <p class="text-sm mt-2">Try adjusting your filter criteria</p>
               <button 
                 (click)="clearFilters()"
-                class="mt-4 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold"
+                class="mt-4 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg hover:from-accent-700 hover:to-accent-800 transition font-semibold"
                 type="button"
               >
                 Clear Filters
@@ -208,17 +208,17 @@
             <div class="space-y-3 max-h-96 overflow-y-auto">
               @for (category of availableCategories(); track category) {
                 <label class="flex items-center p-3 rounded-lg border-2 cursor-pointer transition-colors"
-                       [class.border-indigo-500]="isCategorySelectedInModal(category)"
-                       [class.bg-indigo-50]="isCategorySelectedInModal(category)"
-                       [class.dark:bg-indigo-900]="isCategorySelectedInModal(category)"
+                       [class.border-accent-500]="isCategorySelectedInModal(category)"
+                       [class.bg-accent-50]="isCategorySelectedInModal(category)"
+                       [class.dark:bg-accent-900]="isCategorySelectedInModal(category)"
                        [class.border-gray-200]="!isCategorySelectedInModal(category)"
                        [class.dark:border-gray-700]="!isCategorySelectedInModal(category)"
-                       [class.hover:border-indigo-300]="!isCategorySelectedInModal(category)">
+                       [class.hover:border-accent-300]="!isCategorySelectedInModal(category)">
                   <input 
                     type="checkbox"
                     [checked]="isCategorySelectedInModal(category)"
                     (change)="toggleCategory(category)"
-                    class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                    class="w-5 h-5 text-accent-600 border-gray-300 rounded focus:ring-accent-500 focus:ring-2"
                   />
                   <span class="ml-3 text-gray-900 dark:text-white font-medium">{{ category }}</span>
                   <span class="ml-auto text-sm text-gray-500 dark:text-gray-400">
@@ -242,7 +242,7 @@
               </button>
               <button 
                 (click)="applyFilters()"
-                class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition font-semibold"
+                class="px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg hover:from-accent-700 hover:to-accent-800 transition font-semibold"
                 type="button"
               >
                 Apply Filters

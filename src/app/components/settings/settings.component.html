@@ -27,7 +27,7 @@
                 <button
                   (click)="setThemeMode('light')"
                   [class]="themeService.themeMode() === 'light'
-                    ? 'px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold transition'
+                    ? 'px-4 py-3 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg font-semibold transition'
                     : 'px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-semibold'"
                 >
                   <div class="flex flex-col items-center space-y-1">
@@ -40,7 +40,7 @@
                 <button
                   (click)="setThemeMode('dark')"
                   [class]="themeService.themeMode() === 'dark'
-                    ? 'px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold transition'
+                    ? 'px-4 py-3 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg font-semibold transition'
                     : 'px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-semibold'"
                 >
                   <div class="flex flex-col items-center space-y-1">
@@ -136,7 +136,7 @@
             <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
               <a
                 routerLink="/profile"
-                class="block w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold text-center"
+                class="block w-full px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-lg hover:from-accent-700 hover:to-accent-800 transition font-semibold text-center"
               >
                 Edit Profile
               </a>
