@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { PortfolioDataService, PortfolioData, Experience, Education, Achievement } from '../../services/portfolio-data.service';
 import { AboutComponent } from '../about/about.component';
 import { ResumeSectionComponent } from '../resume-section/resume-section.component';
+import { filter, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -28,8 +30,10 @@ import { ResumeSectionComponent } from '../resume-section/resume-section.compone
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy$ = new Subject<void>();
   protected readonly portfolioService = inject(PortfolioDataService);
   protected readonly portfolioData = this.portfolioService.portfolioData;
   
@@ -38,12 +42,31 @@ export class ProfileComponent implements OnInit {
   protected readonly activeTab = signal<'overview' | 'experience' | 'education' | 'achievements' | 'resume'>('overview');
 
   ngOnInit(): void {
+    // Reload portfolio data on initial load
+    this.portfolioService.reloadPortfolioData();
+    
+    // Reload portfolio data whenever navigating to this route
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        filter(() => this.router.url.startsWith('/profile')),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.portfolioService.reloadPortfolioData();
+      });
+    
     // Check for tab query parameter
     this.route.queryParams.subscribe(params => {
       if (params['tab'] && ['overview', 'experience', 'education', 'achievements', 'resume'].includes(params['tab'])) {
         this.setActiveTab(params['tab'] as any);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // Experience management
